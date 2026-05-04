@@ -83,6 +83,55 @@ Cada módulo expone servicios; los controllers HTTP/Inertia los consumen. Nunca 
 
 > `products` usa **soft-delete obligatorio** (`deleted_at`). Garantiza que `products.id` sea estable de por vida y que `reviews.product_id` no quede huérfano si re-importas un producto desde Shopify.
 
+### Schema crítico de `orders` (campos extendidos)
+
+La tabla `orders` no es solo un snapshot — es el centro operativo del negocio. Campos obligatorios desde día 1:
+
+**Identidad y trazabilidad**
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | bigint PK | |
+| `idempotency_key` | string UNIQUE | Generado en cliente o en controller antes de llamar Shopify |
+| `shopify_order_id` | string nullable indexed | Llega tras llamada exitosa a Shopify |
+| `dropi_order_id` | string nullable indexed | Si se logra extraer del payload |
+| `source` | enum (`web_form`, `whatsapp_bot`, `admin_panel`) | KPI de canal de captura — todo canal externo entra siempre por `OrderService` |
+
+**Datos del destinatario (ya no caben en un único `address` libre)**
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `recipient_full_name` | string | Aparece en guía del courier |
+| `recipient_id_number` | string indexed | **Cédula obligatoria** — anti-fraude COD y exigencia de algunas transportadoras |
+| `recipient_phone` | string | Celular para que el courier llame antes de visitar |
+| `recipient_email` | string indexed | Magic link de reseña + comprobantes |
+| `recipient_department` | string | Departamento (Antioquia, Cundinamarca, Valle, etc.) |
+| `recipient_city` | string indexed | Ciudad/municipio — define qué courier puede entregar |
+| `recipient_neighborhood` | string nullable | Barrio — algunos couriers lo piden para zonificación |
+| `recipient_address_line` | string | Calle, número, complemento (apto, casa, ref) |
+| `recipient_notes` | text nullable | "Tocar timbre 3 veces", referencia de fachada |
+
+**Estado y conciliación**
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `status_local` | enum | `pending_confirmation`, `confirmed`, `sent_to_shopify`, `fulfilled`, `cancelled` |
+| `status_shopify` | string nullable | Espejo del estado real en Shopify (lo actualiza el listener de webhooks) |
+| `status_dropi` | string nullable | Estado canónico de Dropi (`ENTREGADO`, `RECHAZADO`, etc.) — fuente para KPI de tasa COD |
+| `last_synced_at` | timestamp nullable | Última vez que la conciliación nocturna validó esta orden |
+| `cancellation_reason` | enum nullable | `no_coverage`, `no_contact`, `customer_canceled`, `fraud_suspect`, `out_of_stock`, `cod_rejected`, `returned`, `other` — sin esto no hay análisis de pérdidas |
+
+**Pago y costos**
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `total_amount` | numeric | Precio que ve el cliente (envío embebido) |
+| `shipping_cost_internal` | numeric nullable | **Costo interno de flete estimado** para reporte de margen real. Nunca se muestra al cliente |
+
+> **Nota sobre método de pago:** todo es COD/recaudo en MVP y fase de validación. No se modela `payment_method` como columna porque siempre valdría `cod` (YAGNI). Si en el futuro se agrega transferencia bancaria, PSE u otro método, se agrega la columna con migration cuando llegue ese requerimiento.
+
+**Índices obligatorios:** `idempotency_key`, `shopify_order_id`, `status_local`, `created_at`, `recipient_id_number`, `recipient_city`, `(status_local, created_at)` compuesto para listados del admin.
+
 ---
 
 ## 6. Front-end (Inertia.js + React)
@@ -170,8 +219,66 @@ Todos los Jobs que llamen a APIs externas implementan `tries = 5`, `backoff = [1
 - **Laravel NUNCA llama a Dropi directamente.** Dropi solo acepta integraciones autorizadas; Shopify ya es el partner autorizado. Mantener este flujo resuelve el problema de IPs.
 - **Shopify rate limits:** REST 40 req/s, GraphQL cost-based. Por eso todo va a colas.
 - **Webhooks de Shopify** hacia endpoints `/webhooks/shopify/*` con verificación de HMAC obligatoria. Eventos mínimos: `orders/updated`, `orders/fulfilled`, `orders/cancelled`, `products/update`, `inventory_levels/update`.
-- **Endpoint de pago:** PSE/tarjeta débito sin pasarela propia → form se envía al controller, controller crea orden local, encola job de envío a Shopify, redirige a página de confirmación.
+- **Modelo de pago:** 100% COD/recaudo en validación. Sin pasarela online, sin PSE, sin tarjeta. El cliente paga al courier al recibir. El form se envía al controller, controller crea orden local, encola job de envío a Shopify, redirige a página de confirmación.
 - **Conciliación nocturna:** comando artisan `orders:reconcile` que compara estado local vs Shopify y marca inconsistencias para revisión manual.
+
+### 8.1 Mapping de estados Dropi → Shopify → local
+
+Dropi expone ~60 estados (incluye duplicados de courier). Solo mapeamos los **canónicos finales** que disparan webhooks útiles a Laravel. Los estados intermedios (`PENDIENTE`, `EN BODEGA`, `EN REPARTO`, etc.) se ignoran a propósito — no aportan info accionable y solo generan ruido de webhooks.
+
+| Estado Dropi | Shopify Status | Por qué |
+|---|---|---|
+| `ENTREGADO` | `FULFILLED` | 🔴 Disparador del webhook `orders/fulfilled`. Encola `SendReviewRequestEmailJob` con timing correcto (post-entrega real, no post-generación de guía) |
+| `CANCELADO` | `CANCELED` | Cancelación pre-envío. Cierre limpio sin pérdida logística. `cancellation_reason = 'customer_canceled'` |
+| `RECHAZADO` | `CANCELED` | Cliente rechazó al entregar (pérdida COD). Laravel preserva el matiz en `status_dropi='RECHAZADO'` y `cancellation_reason='cod_rejected'` para KPI |
+| `DEVOLUCION` | `CANCELED` | Cliente devolvió producto entregado. `cancellation_reason='returned'` |
+| `INDEMNIZADA POR DROPI` | `ARCHIVED` | Caso especial: no se entregó pero Dropi te paga. No es venta ni cancelación pura — archivado. Dispara webhook `orders/closed`, no `orders/cancelled` |
+
+**Estados Dropi explícitamente NO mapeados:** `PENDIENTE_CONFIRMACION`, `PENDIENTE`, `GUIA_GENERADA`, `GUIA_ANULADA`, `PREPARADO PARA TRANSPORTADORA`, `RECOGIDO POR DROPI`, `EN PROCESAMIENTO`, todos los `EN TRANSITO/REPARTO/BODEGA`, `NOVEDAD SOLUCIONADA`, `EN ESPERA DE RX`, `EN CONFIRMACIÓN TELEFÓNICA`, y todos los duplicados de courier (`ENTREGADA`, `ENTREGA EXITOSA`, `REPORTADO ENTREGADO`, `ENTREGA VERIFICADA`, etc. — Dropi normalmente los consolida en `ENTREGADO`).
+
+**Validación empírica obligatoria:** este mapping es teoría hasta que el primer pedido real recorra el flujo completo. En el MVP, loguear **todos los webhooks** de Shopify con payload completo a un archivo durante el ciclo de vida de los primeros 5-10 pedidos. Si un estado importante no dispara webhook, agregar excepción al mapping. Si un webhook se dispara por algo no querido, quitar mapping.
+
+### 8.2 Flujo de confirmación y captura multi-canal
+
+```
+┌─────────────┐
+│ Form web    │──┐
+├─────────────┤  │
+│ Bot WhatsApp│──┼──> POST /api/orders ──> OrderService::createFromPayload($payload, $source)
+├─────────────┤  │           ↓
+│ Admin manual│──┘    Orden local + idempotency_key + status_local='pending_confirmation'
+└─────────────┘            ↓
+                      SendOrderToShopifyJob (cola, financial_status='paid' incluso COD)
+                           ↓
+                      Shopify Admin API
+                           ↓
+                      Dropi (vía app oficial) — orden cae en PENDIENTE_CONFIRMACION
+                           ↓
+                      Confirmación manual (MVP) o bot WhatsApp (post-MVP)
+                           ↓
+                      Selección de courier: Dropi auto-filtra los disponibles por ciudad;
+                      operador elige entre los habilitados
+                           ↓
+                      Dropi: GUIA_GENERADA → ... → ENTREGADO
+                           ↓
+                      Webhook orders/fulfilled → Laravel
+                           ↓
+                      SendReviewRequestEmailJob encolado +N días
+```
+
+**Reglas de captura:**
+
+- **Toda creación de orden pasa por `OrderService::createFromPayload($payload, $source)`.** Único punto de entrada. Form web, bot WhatsApp, admin manual y futuros canales convergen acá.
+- **`source` se persiste en `orders.source`** para atribución por canal (KPI de ROAS por origen).
+- **No se valida cobertura en el formulario.** El cliente puede pedir desde cualquier ciudad; el operador valida cobertura al confirmar en Dropi. Si la ciudad no tiene courier disponible, se cancela con `cancellation_reason='no_coverage'`. Esta decisión privilegia conversión sobre filtrado preventivo.
+- **No hay tabla `coverage_cities`.** Dropi mismo expone los couriers disponibles por ciudad al momento de generar guía — esa es la fuente de verdad, no una réplica nuestra.
+- **Confirmación telefónica:**
+  - **MVP:** manual desde panel Dropi (operador llama, valida intención y dirección, asigna courier).
+  - **Post-MVP:** WhatsApp Business API + agente IA (Lucidbot, Chatea Pro u otro). Decisión de proveedor diferida — ver futura sección dedicada.
+- **`financial_status` no se setea desde Laravel** — se deja en el default de Shopify (`pending`), porque refleja la realidad: el cliente todavía no pagó (lo hará al courier).
+- **Checkbox "Sincronizar órdenes pagadas automáticamente" en Dropi: DESMARCADO.** Como no habrá nunca un `financial_status='paid'` real (es todo COD), si quedara marcado Dropi no recogería ninguna orden. Desmarcarlo permite que Dropi se traiga todas las órdenes nuevas y caigan en `PENDIENTE_CONFIRMACION` para confirmación manual.
+
+**Regla de adopción de canales externos:** cualquier integración futura de captura (bot WhatsApp, call center, marketplace) **debe poder apuntar a `POST /api/orders` de Glofit**. Si un proveedor solo permite push directo a Dropi y no a webhook propio, se descarta como integración por la pérdida de propiedad de cliente.
 
 ---
 
@@ -230,6 +337,10 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 | Dropi rechaza IP                      | Nunca llamar Dropi directo; siempre vía Shopify          |
 | Reseñas falsas / spam de competencia  | Magic link firmado vinculado a `order_item_id` + moderación admin obligatoria (`status = pending` por defecto) |
 | Re-importar producto deja reseñas huérfanas | Soft-delete + upsert por `shopify_product_id` mantiene `products.id` estable |
+| Pérdida COD sin métrica (no se distingue rechazo vs no-cobertura vs fraude) | Columna `orders.cancellation_reason` con enum cargado manual o por webhook |
+| Lógica de creación duplicada en form web vs bot WhatsApp vs admin | Único punto de entrada `OrderService::createFromPayload($payload, $source)` |
+| Estado Dropi no mapeado pasa silencioso (orden colgada) | Mapping mínimo §8.1 + logging empírico de webhooks en primeros 5-10 pedidos reales |
+| Bot externo crea órdenes directo en Dropi (regalando cliente al canal) | Regla de adopción §8.2: todo canal externo debe POSTear a `/api/orders`; los que no, se descartan |
 
 ---
 
@@ -270,6 +381,13 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 - [ ] Cola de moderación de reseñas en panel admin (aprobar / rechazar / spam)
 - [ ] Decidir storage de fotos de reseña (Cloudflare R2 / Bunny vs `storage/app/public`) — variable `REVIEWS_DISK`
 - [ ] Sección "Confía en nosotros" en home con reseñas globales aprobadas (cacheada)
+- [ ] Tabla `orders` con todos los campos extendidos del §5 (recipient_*, source, cancellation_reason, shipping_cost_internal)
+- [ ] `OrderService::createFromPayload($payload, $source)` como único punto de creación de órdenes
+- [ ] Endpoint `POST /api/orders` autenticado por API key (placeholder para bot WhatsApp post-MVP)
+- [ ] Configurar mapping Dropi↔Shopify según §8.1 (5 estados canónicos)
+- [ ] **Desmarcar** "Sincronizar órdenes pagadas automáticamente" en panel Dropi (todo es COD)
+- [ ] Logger temporal de payloads completos de webhooks Shopify durante primeros 5-10 pedidos reales
+- [ ] Política de envío gratis embebido (§16) reflejada en la tabla `products` o configuración de catálogo
 
 ---
 
@@ -382,6 +500,46 @@ Cacheable 10-15 min en driver `cache` (database) para no pegarle al MySQL en cad
 - Tracking del pedido en mi dominio (proxy de info de Shopify/Dropi) detrás del mismo magic link → razón fuerte para que abran el email.
 - Cupón de descuento en email post-reseña para fomentar repeat purchase.
 - Migrar `reviews` a `order_item_id` siempre se mantiene; ya está así desde día 1, así que combos no requieren migración futura.
+
+---
+
+## 15. Setup de Shopify Partners y conexión inicial
+
+Pendiente de documentar cuando se cierre el setup completo (instalación de app custom, generación de `ACCESS_TOKEN`, configuración de Cloudflare Tunnel para webhooks en dev local, registro de webhooks vía API). Por ahora, decisiones cerradas:
+
+- **Scopes mínimos:** `read_fulfillments,read_inventory,read_orders,write_orders,read_products`. Sin `write_products` (Shopify es source-of-truth del catálogo, Laravel solo lee).
+- **API version:** `2026-04`.
+- **Flujo de instalación heredado:** desactivado (usar OAuth moderno).
+- **URL de callback en dev:** Cloudflare Tunnel apuntando a `php artisan serve`. URL cambia por reinicio del túnel — actualizar en Dev Dashboard cada vez.
+- **Dev store:** configurado con país Colombia (no US) para que Dropi funcione correctamente en moneda, dirección y validación de envío.
+
+---
+
+## 16. Política de envío y precios
+
+**Modelo: envío gratis embebido en el precio del producto.**
+
+- El cliente ve un único precio que incluye producto + flete + margen. Sin costo extra al checkout.
+- Cálculo manual offline por producto+ciudad (operador estima el flete promedio para las ciudades de mayor venta y carga el precio final en `products.price`).
+- **Sin lógica de cálculo de envío en código.** El campo `shipping_cost_internal` en `orders` es solo para reporte interno de margen real, no para mostrar al cliente.
+
+**Por qué este modelo en COD Colombia:**
+
+- Es el estándar del nicho: el cliente no espera ver flete separado, y agregarlo destruye conversión.
+- Simplifica el formulario: solo cantidad, no cotizador dinámico.
+- Margen sobreestimado cubre el flete promedio; las ciudades caras drenan margen pero el grueso de pedidos compensa.
+
+**Cuándo revisar precios:**
+
+- Reporte mensual de margen real por ciudad (`shipping_cost_internal` vs precio cobrado).
+- Si una ciudad sangra margen recurrentemente → marginar esa ciudad como "cobertura limitada" o subir precio del producto en una landing dedicada.
+- Si Dropi sube tarifas de courier → recalcular precios de todos los productos activos.
+
+**Lo que NO hacemos (decisiones explícitamente descartadas):**
+
+- ❌ Tarifa plana nacional al checkout — perdemos conversión y honestidad de precio único se rompe.
+- ❌ Calculadora dinámica por ciudad/courier — agrega fricción y requiere mantener tabla de tarifas, complejidad innecesaria para el MVP.
+- ❌ Tabla `coverage_cities` en DB — Dropi ya filtra couriers por ciudad disponible al confirmar; replicar es deuda de mantenimiento.
 
 ---
 
