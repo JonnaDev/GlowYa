@@ -6,21 +6,27 @@ namespace App\Modules\Orders\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Landing\Services\LandingService;
 use App\Modules\Orders\Services\OrderService;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class PublicOrderController extends Controller
 {
-    public function noilLanding(): View
-    {
-        return view('landing-page-noil');
-    }
+    public function __construct(
+        private readonly LandingService $landings,
+    ) {}
 
-    public function storeNoil(Request $request, OrderService $orders): RedirectResponse
+    public function store(Request $request, OrderService $orders, string $slug): RedirectResponse
     {
+        $landing = $this->landings->findActiveBySlug($slug);
+
+        if ($landing === null) {
+            throw new NotFoundHttpException();
+        }
+
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'min:3', 'max:100'],
             'id_number' => ['required', 'string', 'min:6', 'max:20'],
@@ -34,7 +40,9 @@ class PublicOrderController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $product = Product::first();
+        $product = $landing->product_id !== null
+            ? Product::find($landing->product_id)
+            : Product::first();
 
         if ($product === null) {
             return back()
@@ -66,7 +74,7 @@ class PublicOrderController extends Controller
         }
 
         return redirect()
-            ->route('landing.noil')
+            ->route('landing.show', ['slug' => $landing->slug])
             ->with('success', "¡Pedido #{$order->id} recibido! Te llamaremos a {$order->recipient_phone} para confirmar.");
     }
 }

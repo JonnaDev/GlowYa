@@ -388,6 +388,13 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 - [ ] **Desmarcar** "Sincronizar órdenes pagadas automáticamente" en panel Dropi (todo es COD)
 - [ ] Logger temporal de payloads completos de webhooks Shopify durante primeros 5-10 pedidos reales
 - [ ] Política de envío gratis embebido (§16) reflejada en la tabla `products` o configuración de catálogo
+- [x] Módulo `Landing` con tabla `landings` (slug, blade_view, product_id, is_active) — §17
+- [x] Convención `resources/views/landings/{slug}.blade.php` ↔ `landings.blade_view`
+- [x] Catch-all dinámico `/{slug}` al final de `web.php` con regex `[a-z0-9-]+`
+- [x] Admin UI Inertia (`/admin/landings`) para toggle activo/inactivo
+- [ ] `view()->exists()` defensivo en `PublicLandingController` antes de renderizar
+- [ ] Reserved-slugs list validada en `LandingService::create/update` (login, register, admin, dashboard, api, profile, webhooks, storage, up)
+- [ ] Comando `php artisan landing:make {slug} --product={id}` cuando se cree la landing #3
 
 ---
 
@@ -540,6 +547,118 @@ Pendiente de documentar cuando se cierre el setup completo (instalación de app 
 - ❌ Tarifa plana nacional al checkout — perdemos conversión y honestidad de precio único se rompe.
 - ❌ Calculadora dinámica por ciudad/courier — agrega fricción y requiere mantener tabla de tarifas, complejidad innecesaria para el MVP.
 - ❌ Tabla `coverage_cities` en DB — Dropi ya filtra couriers por ciudad disponible al confirmar; replicar es deuda de mantenimiento.
+
+---
+
+## 17. Módulo Landing — Convención y registry
+
+Módulo dedicado al ciclo de vida de las landing pages públicas. El objetivo: que activar, desactivar o crear una landing no requiera tocar `web.php` ni redeploy. Toda landing existe como "pieza de marketing" con creatividad propia (HTML/CSS hardcoded en blade) + datos vivos del producto (precio, título, imagen vía DB).
+
+### Decisiones cerradas
+
+- **1 landing : 1 producto** (mono-producto). Combos y variants se modelarán cuando aparezcan, **sin pisar el modelo actual** (los dos casos serán ortogonales — ver Roadmap).
+- **Convención de archivos:** cada landing vive en `resources/views/landings/{slug}.blade.php`. La columna `landings.blade_view` guarda la notación Laravel (ej. `landings.noil`). Pueden divergir si admin renombra el slug pero conserva la blade — flexibilidad sin acoplamiento.
+- **El slug es la URL pública.** `/{slug}` se resuelve dinámicamente vía DB. La ruta es **catch-all al final de `web.php`** con regex `[a-z0-9-]+` para no pisar rutas estáticas.
+- **El admin nunca toca código** para activar/desactivar. Solo toggle desde panel `/admin/landings`.
+- **`is_active=false` ⇒ 404 público.** No mostrar versión "pausada" porque indexar zombies daña SEO.
+- **El blade no hardcodea precio/título/imagen.** Esos vienen de `$product->*` inyectado por el controller. Solo el creativo (hero, copy del nicho, testimonios, layout) va hardcoded.
+
+### Schema de `landings`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | bigint PK | |
+| `slug` | string UNIQUE | URL pública. Validar contra reserved-words list al crear/editar |
+| `title` | string | Texto descriptivo para el admin (no se muestra en pública) |
+| `blade_view` | string | Notación Laravel (`landings.{slug}`). Puede divergir del slug si admin renombra |
+| `product_id` | bigint nullable FK → `products.id` | 1:1 mono-producto. Nullable transitorio MVP — endurecer a NOT NULL cuando admin UI fuerce asignación |
+| `is_active` | bool default false | Toggle público. `false` ⇒ 404 |
+| `description` | text nullable | Solo admin |
+| `timestamps` | | |
+
+**Índices obligatorios:** UNIQUE en `slug`, compuesto en `(is_active, slug)` para queries del controller público.
+
+### Flujo end-to-end
+
+```
+1. Importar producto desde Shopify       → products table (vía ProductImporter)
+2. Crear blade del landing                → resources/views/landings/{slug}.blade.php
+3. Insertar row en landings               → seed/migration o admin UI futuro
+                                            (slug, blade_view='landings.{slug}', product_id, is_active=false)
+4. Admin activa la landing                → POST /admin/landings/{slug}/toggle → is_active=true
+5. Pública sirve /{slug}                  → PublicLandingController resuelve landing + product
+                                            → render blade con $landing y $product
+6. Form POST /{slug}/order                → PublicOrderController → OrderService::createFromPayload
+                                            → SendOrderToShopifyJob (cola) → Shopify → Dropi
+```
+
+### Datos disponibles en el blade
+
+El controller inyecta dos variables al render:
+
+- **`$landing`** — modelo `Landing` completo (slug, blade_view, is_active, etc.). Útil para `route('landing.order', ['slug' => $landing->slug])` en el form.
+- **`$product`** — el producto asociado vía FK. Si `landing->product_id` es null, fallback a `Product::first()` (transitorio MVP). Si no hay productos en absoluto, 404.
+
+**Regla de oro:**
+- Creatividad (HTML, copy, imágenes hero del nicho) ⇒ **hardcoded en blade**.
+- Datos volátiles (precio, título, imagen del producto, `shopify_variant_id` para el form) ⇒ **`$product->*`**.
+
+Esto permite cambiar precio en Shopify y que el landing refleje el cambio sin redeploy. Y rediseñar el creativo sin afectar los datos.
+
+### Reglas defensivas
+
+- **`view()->exists($landing->blade_view)` antes de renderizar.** Si la blade fue borrada y la row quedó huérfana, devolver 404 + log a Sentry. **Nunca 500 al usuario público.**
+- **Reserved slugs.** Lista negra centralizada en `LandingService` y validada al crear/editar:
+  ```
+  login, register, dashboard, admin, api, profile, webhooks, storage, up,
+  password, email, verify-email, reset-password, forgot-password, logout,
+  catalog, orders, products, sales, analytics
+  ```
+  El catch-all regex `[a-z0-9-]+` ya bloquea uppercase y barras, pero esto previene colisiones accidentales con rutas Laravel.
+- **Catch-all al final de `web.php`.** Las rutas dinámicas `/{slug}` y `/{slug}/order` se declaran **después de todas las estáticas y de `auth.php`**. Nunca insertar rutas estáticas debajo del catch-all.
+- **CSRF obligatorio en form POST.** El blade usa `@csrf`. El POST `/{slug}/order` está dentro del middleware web por defecto.
+
+### Roadmap evolutivo (no implementar todavía)
+
+**Cuando llegue el primer combo (landing con N productos):**
+
+Agregar tabla pivote `landing_products`:
+
+| Columna | Tipo |
+|---|---|
+| `landing_id` | FK → `landings` cascadeOnDelete |
+| `product_id` | FK → `products` |
+| `quantity` | unsigned int default 1 |
+| `display_order` | unsigned int |
+| `unit_price_override` | decimal(12,2) nullable |
+
+**`landings.product_id` no se deprecia.** Las dos formas conviven y son ortogonales: si el pivote tiene rows ⇒ combo; si solo `product_id` está seteado ⇒ mono-producto. La lógica de resolución vive en `LandingService::resolveProductsFor($landing)`.
+
+**Cuando un producto tenga variants relevantes (jabón con 3 fragancias, talla, color):**
+
+Agregar columna `landings.product_variant_id` nullable FK. Si está seteada, **prevalece sobre `product_id`** al construir el `line_items` para Shopify (Shopify requiere `variant_id`, no `product_id`, en órdenes).
+
+**Cuando crees la landing #3 manualmente y te canse copiar/pegar:**
+
+Comando `php artisan landing:make {slug} --product={id} [--stub=default]`:
+- Copia stub blade a `resources/views/landings/{slug}.blade.php`
+- Inserta row en `landings` (slug, blade_view, product_id, is_active=false)
+- Output: URL preview (`/{slug}`) + URL admin (`/admin/landings`)
+
+**Cuando admin UI lo necesite:**
+
+Endpoints adicionales en `Modules/Landing/Http/Controllers/Admin/LandingController`:
+- `update(Landing $landing)` — editar título, descripción, asignar/cambiar `product_id`
+- `destroy(Landing $landing)` — soft-delete (no perder URLs por accidente)
+- `duplicate(Landing $landing)` — clonar fila + blade con nuevo slug, para A/B testing
+
+### Lo que explícitamente NO modelamos (decisiones descartadas)
+
+- ❌ **Editor visual de landings.** Costo de implementación inflado para 5-10 landings + 1 dev. Si el equipo crece y necesitás eso, migrá a Shogun/PageFly/GemPages — no lo construyas in-house.
+- ❌ **CMS dedicado (Strapi, Sanity, Statamic).** Over-engineering para el caso. Blade + tabla `landings` cubren multi-año.
+- ❌ **A/B testing automatizado por landing.** Validá manual con dos slugs (`noil` vs `noil-v2`) y comparalo en analytics. Cuando sea repetitivo, automatizá; antes, no.
+- ❌ **Editor de copy desde admin (CMS-lite).** Si necesitás cambiar copy seguido, refactorizás el creativo a `$copy->*` desde DB. Pero no antes — reduce libertad creativa por una funcionalidad que probablemente nunca uses.
+- ❌ **Subdominio por landing (`noil.glofit.co`).** SEO equivalente a subcarpeta en este volumen, complica DNS y Cloudflare. Mantener `glofit.co/{slug}` plano.
 
 ---
 

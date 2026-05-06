@@ -7,6 +7,7 @@ import {
     ChevronUp,
     DollarSign,
     Download,
+    Globe,
     Home,
     LucideIcon,
     Menu,
@@ -40,6 +41,7 @@ const sections: SidebarSection[] = [
     {
         title: 'Admin',
         links: [
+            { label: 'Landings', href: '/admin/landings', routeName: 'admin.landings.index', icon: Globe },
             { label: 'Órdenes generadas', href: '/orders', routeName: 'orders.index', icon: ShoppingCart },
             { label: 'Productos importados', href: '/products', routeName: 'products.index', icon: Package },
             { label: 'Ventas totales', href: '/sales', routeName: 'sales.index', icon: DollarSign },

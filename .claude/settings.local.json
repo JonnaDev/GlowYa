@@ -7,7 +7,9 @@
       "Bash(npm install *)",
       "Bash(php artisan *)",
       "Bash(composer dump-autoload *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git config *)",
+      "Bash(git fsck *)"
     ]
   }
 }

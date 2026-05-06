@@ -5,21 +5,22 @@ declare(strict_types=1);
 namespace App\Modules\Orders\Services;
 
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Orders\Jobs\SendOrderToShopifyJob;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Orders\Models\OrderItem;
-use App\Modules\Shopify\Services\ShopifyClient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class OrderService
 {
-    public function __construct(
-        private readonly ShopifyClient $shopify,
-    ) {}
-
     /**
-     * Crea una orden local + la envía a Shopify (que a su vez la propaga a Dropi).
+     * Crea una orden local + encola el envío a Shopify.
+     *
+     * El cliente recibe respuesta inmediata con la orden persistida; el job
+     * (`SendOrderToShopifyJob`) hace la llamada HTTP a Shopify Admin API en
+     * background con reintentos. Shopify a su vez propaga a Dropi vía la
+     * integración nativa de partners.
      *
      * Payload esperado:
      * - source: web_form|whatsapp_bot|admin_panel
@@ -43,7 +44,7 @@ class OrderService
             fn (array $i): float => (float) $i['unit_price'] * (int) $i['quantity']
         );
 
-        return DB::transaction(function () use ($payload, $source, $idempotencyKey, $items, $totalAmount): Order {
+        $order = DB::transaction(function () use ($payload, $source, $idempotencyKey, $items, $totalAmount): Order {
             $order = Order::create([
                 'idempotency_key' => $idempotencyKey,
                 'source' => $source,
@@ -72,14 +73,18 @@ class OrderService
                 ]);
             }
 
-            $this->dispatchToShopify($order, $items);
-
-            return $order->fresh('items');
+            return $order;
         });
+
+        SendOrderToShopifyJob::dispatch($order)->afterCommit();
+
+        return $order->fresh('items');
     }
 
     /**
      * Resuelve los items contra la DB local + extrae los datos snapshot.
+     *
+     * @return array<int,array{product_id:int,shopify_variant_id:string,title:string,sku:?string,quantity:int,unit_price:float}>
      */
     private function resolveItems(array $rawItems): array
     {
@@ -103,84 +108,5 @@ class OrderService
         }
 
         return $resolved;
-    }
-
-    /**
-     * Envía la orden a Shopify y guarda el shopify_order_id local.
-     *
-     * NOTA MVP: hoy es síncrono dentro de la transacción para que el test sea
-     * trivial. En producción esto se mueve a SendOrderToShopifyJob (cola)
-     * para no bloquear el request del cliente.
-     */
-    private function dispatchToShopify(Order $order, array $items): void
-    {
-        $payload = $this->buildShopifyPayload($order, $items);
-
-        $shopifyOrder = $this->shopify->createOrder($payload);
-
-        $order->update([
-            'shopify_order_id' => (string) $shopifyOrder['id'],
-            'status_local' => 'sent_to_shopify',
-            'last_synced_at' => now(),
-        ]);
-    }
-
-    private function buildShopifyPayload(Order $order, array $items): array
-    {
-        [$firstName, $lastName] = $this->splitName($order->recipient_full_name);
-
-        $lineItems = array_map(fn (array $i): array => [
-            'variant_id' => (int) $i['shopify_variant_id'],
-            'quantity' => (int) $i['quantity'],
-        ], $items);
-
-        return [
-            'line_items' => $lineItems,
-            'email' => $order->recipient_email,
-            'phone' => $order->recipient_phone,
-            'note' => sprintf(
-                "Glofit Order #%d | Cédula: %s%s",
-                $order->id,
-                $order->recipient_id_number,
-                $order->recipient_notes ? "\nNotas: {$order->recipient_notes}" : '',
-            ),
-            'tags' => "glofit,source:{$order->source}",
-            'shipping_address' => [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'address1' => $order->recipient_address_line,
-                'address2' => $order->recipient_neighborhood,
-                'city' => $order->recipient_city,
-                'province' => $order->recipient_department,
-                'country' => 'Colombia',
-                'country_code' => 'CO',
-                'phone' => $order->recipient_phone,
-                'zip' => '000000',
-            ],
-            'billing_address' => [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'address1' => $order->recipient_address_line,
-                'address2' => $order->recipient_neighborhood,
-                'city' => $order->recipient_city,
-                'province' => $order->recipient_department,
-                'country' => 'Colombia',
-                'country_code' => 'CO',
-                'phone' => $order->recipient_phone,
-                'zip' => '000000',
-            ],
-            'send_receipt' => false,
-            'send_fulfillment_receipt' => false,
-        ];
-    }
-
-    private function splitName(string $fullName): array
-    {
-        $parts = preg_split('/\s+/', trim($fullName), 2);
-
-        return [
-            $parts[0] ?? $fullName,
-            $parts[1] ?? '',
-        ];
     }
 }
