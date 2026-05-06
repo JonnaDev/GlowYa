@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:lucidbot.co)",
+      "WebFetch(domain:chateapro.com)",
+      "Bash(npm install *)",
+      "Bash(php artisan *)",
+      "Bash(composer dump-autoload *)",
+      "Bash(npm run *)"
+    ]
+  }
+}
