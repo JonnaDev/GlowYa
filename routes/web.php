@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Modules\Catalog\Http\Controllers\ImportController;
+<<<<<<< HEAD
 use App\Modules\Orders\Http\Controllers\PublicOrderController;
+=======
+>>>>>>> a9d66967759f69b9027f0a589546dedc095fc556
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -16,10 +19,13 @@ Route::get('/', function () {
     ]);
 });
 
+<<<<<<< HEAD
 // Landing pública NOIL (MVP)
 Route::get('/noil', [PublicOrderController::class, 'noilLanding'])->name('landing.noil');
 Route::post('/noil/order', [PublicOrderController::class, 'storeNoil'])->name('landing.noil.order');
 
+=======
+>>>>>>> a9d66967759f69b9027f0a589546dedc095fc556
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
