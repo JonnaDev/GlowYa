@@ -9,7 +9,13 @@
       "Bash(composer dump-autoload *)",
       "Bash(npm run *)",
       "Bash(git config *)",
-      "Bash(git fsck *)"
+      "Bash(git fsck *)",
+      "Bash(\"C:/laragon/bin/php/php-8.3.16-Win32-vs16-x64/php.exe\" c:/laragon/www/Glofit/artisan tinker --execute=\"echo \\\\App\\\\Modules\\\\Catalog\\\\Models\\\\Product::all\\(['id','title','sku','shopify_product_id','inventory_quantity','price']\\)->toJson\\(JSON_PRETTY_PRINT\\);\")",
+      "Bash(where ffmpeg *)",
+      "Bash(ffmpeg -version)",
+      "Read(//c/laragon/bin/mysql/**)",
+      "Read(//c/laragon/bin/**)",
+      "Read(//c/Program Files/**)"
     ]
   }
 }

@@ -364,12 +364,12 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 
 ## 13. Checklist de inicio del proyecto
 
-- [ ] Crear repo Git, estructura modular base
+- [X] Crear repo Git, estructura modular base
 - [ ] Configurar Cloudflare frente al dominio
-- [ ] Crear app en Shopify Partners y obtener credenciales
+- [X] Crear app en Shopify Partners y obtener credenciales
 - [ ] Crear cuenta Sentry y configurar `sentry/sentry-laravel`
-- [ ] Implementar tabla `orders` con `idempotency_key`
-- [ ] Implementar `SendOrderToShopifyJob` con reintentos
+- [X] Implementar tabla `orders` con `idempotency_key`
+- [X] Implementar `SendOrderToShopifyJob` con reintentos
 - [ ] Configurar crontab con `schedule:run` + `queue:work --stop-when-empty`
 - [ ] Implementar verificación HMAC de webhooks Shopify
 - [ ] Implementar comando `orders:reconcile`
@@ -381,8 +381,8 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 - [ ] Cola de moderación de reseñas en panel admin (aprobar / rechazar / spam)
 - [ ] Decidir storage de fotos de reseña (Cloudflare R2 / Bunny vs `storage/app/public`) — variable `REVIEWS_DISK`
 - [ ] Sección "Confía en nosotros" en home con reseñas globales aprobadas (cacheada)
-- [ ] Tabla `orders` con todos los campos extendidos del §5 (recipient_*, source, cancellation_reason, shipping_cost_internal)
-- [ ] `OrderService::createFromPayload($payload, $source)` como único punto de creación de órdenes
+- [X] Tabla `orders` con todos los campos extendidos del §5 (recipient_*, source, cancellation_reason, shipping_cost_internal)
+- [X] `OrderService::createFromPayload($payload, $source)` como único punto de creación de órdenes
 - [ ] Endpoint `POST /api/orders` autenticado por API key (placeholder para bot WhatsApp post-MVP)
 - [ ] Configurar mapping Dropi↔Shopify según §8.1 (5 estados canónicos)
 - [ ] **Desmarcar** "Sincronizar órdenes pagadas automáticamente" en panel Dropi (todo es COD)
