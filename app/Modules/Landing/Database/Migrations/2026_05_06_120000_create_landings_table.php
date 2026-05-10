@@ -26,7 +26,8 @@ return new class extends Migration {
         // Convención: 1 landing : 1 producto. La blade vive en
         // resources/views/landings/{slug}.blade.php → notación Laravel `landings.{slug}`.
         // product_id se asigna desde el admin tras importar el producto desde Shopify.
-        DB::table('landings')->insertOrIgnore([
+        
+        /*DB::table('landings')->insertOrIgnore([
             [
                 'slug' => 'noil',
                 'title' => 'NOIL — Starry Say Oiled Perfume Body Wash',
@@ -38,6 +39,7 @@ return new class extends Migration {
                 'updated_at' => now(),
             ],
         ]);
+        */
     }
 
     public function down(): void
