@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Modules\Catalog\Http\Controllers\ImportController;
 use App\Modules\Landing\Http\Controllers\Admin\LandingController as AdminLandingController;
+use App\Modules\Orders\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Modules\Landing\Http\Controllers\PublicLandingController;
 use App\Modules\Orders\Http\Controllers\PublicOrderController;
 use Illuminate\Foundation\Application;
@@ -34,7 +35,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         ->name('admin.landings.toggle');
 
     // Admin
-    Route::get('/orders', fn () => Inertia::render('Orders/Index'))
+    Route::get('/orders', [AdminOrderController::class, 'index'])
         ->name('orders.index');
     Route::get('/products', fn () => Inertia::render('Products/Index'))
         ->name('products.index');
