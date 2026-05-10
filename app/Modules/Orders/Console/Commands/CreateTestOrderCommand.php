@@ -13,7 +13,7 @@ class CreateTestOrderCommand extends Command
 {
     protected $signature = 'orders:test-create';
 
-    protected $description = 'Create a test order using the first imported product (Glofit dev only)';
+    protected $description = 'Create a test order using the first imported product (GlowYa dev only)';
 
     public function handle(OrderService $orders): int
     {
@@ -29,10 +29,10 @@ class CreateTestOrderCommand extends Command
         $this->newLine();
 
         $payload = [
-            'recipient_full_name' => 'Cliente Prueba Glofit',
+            'recipient_full_name' => 'Cliente Prueba GlowYa',
             'recipient_id_number' => '1234567890',
             'recipient_phone' => '3155771146',
-            'recipient_email' => 'test+glofit@example.com',
+            'recipient_email' => 'test+glowya@example.com',
             'recipient_department' => 'Huila',
             'recipient_city' => 'Neiva',
             'recipient_neighborhood' => 'Centro',

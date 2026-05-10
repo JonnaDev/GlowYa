@@ -1051,7 +1051,7 @@
          ╚══════════════════════════════════════════════════════╝ --}}
     <footer class="bg-slate-900 py-10 px-6 text-center text-[11px] text-slate-400">
         <p class="text-sky-400 text-sm font-bold mb-2">Dr Melaxin <span class="text-white/60">TX Cream</span></p>
-        <p>© {{ date('Y') }} Glofit · Todos los derechos reservados.</p>
+        <p>© {{ date('Y') }} GlowYa · Todos los derechos reservados.</p>
         <p class="mt-1 text-slate-500">El uso prolongado debe ir acompañado de protector solar FPS 50+ diario.</p>
     </footer>
 

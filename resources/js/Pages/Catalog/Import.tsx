@@ -112,7 +112,7 @@ export default function CatalogImport() {
                             Importación Shopify
                         </h2>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Sincroniza el catálogo de tu tienda Shopify con la base de datos local de Glofit.
+                            Sincroniza el catálogo de tu tienda Shopify con la base de datos local de GlowYa.
                         </p>
                     </div>
                     <button

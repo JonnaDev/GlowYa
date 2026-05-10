@@ -1,5 +1,4 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
 import SidebarNavLink from '@/Components/SidebarNavLink';
 import { Link, usePage } from '@inertiajs/react';
 import {
@@ -56,6 +55,7 @@ export default function Authenticated({
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const user = usePage().props.auth.user;
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     const isActive = (routeName?: string) => {
         if (!routeName) return false;
@@ -83,7 +83,7 @@ export default function Authenticated({
                         </div>
                         <div className="flex flex-col leading-tight">
                             <span className="text-sm font-semibold tracking-tight text-slate-100">
-                                Glofit
+                                GlowYa
                             </span>
                             <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
                                 Admin
@@ -134,43 +134,58 @@ export default function Authenticated({
                     ))}
                 </nav>
 
-                {/* User dropdown */}
-                <div className="border-t border-slate-800/80 p-3">
-                    <Dropdown>
-                        <Dropdown.Trigger>
-                            <button
-                                type="button"
-                                className="group flex w-full items-center justify-between rounded-lg p-2 transition-all duration-200 hover:bg-white/5"
-                            >
-                                <span className="flex items-center gap-3 overflow-hidden">
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-700 to-slate-800 text-xs font-semibold uppercase text-slate-200 ring-2 ring-slate-700">
-                                        {user.name.charAt(0)}
-                                    </span>
-                                    <span className="flex flex-col items-start overflow-hidden leading-tight">
-                                        <span className="w-full truncate text-sm font-semibold text-slate-100">
-                                            {user.name}
-                                        </span>
-                                        <span className="w-full truncate text-xs text-slate-500">
-                                            {user.email}
-                                        </span>
-                                    </span>
+                {/* User menu */}
+                <div className="relative border-t border-slate-800/80 p-3">
+                    {/* Upward panel — visible when userMenuOpen */}
+                    {userMenuOpen && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setUserMenuOpen(false)}
+                            />
+                            <div className="absolute bottom-full left-3 right-3 z-50 mb-1 overflow-hidden rounded-lg border border-slate-700/60 bg-slate-800 shadow-xl shadow-black/30">
+                                <Link
+                                    href={route('profile.edit')}
+                                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-200 transition-colors hover:bg-white/5"
+                                    onClick={() => setUserMenuOpen(false)}
+                                >
+                                    Mi perfil
+                                </Link>
+                                <Link
+                                    href={route('logout')}
+                                    method="post"
+                                    as="button"
+                                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-400 transition-colors hover:bg-white/5"
+                                    onClick={() => setUserMenuOpen(false)}
+                                >
+                                    Cerrar sesión
+                                </Link>
+                            </div>
+                        </>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={() => setUserMenuOpen((prev) => !prev)}
+                        className="group flex w-full items-center justify-between rounded-lg p-2 transition-all duration-200 hover:bg-white/5"
+                    >
+                        <span className="flex items-center gap-3 overflow-hidden">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-700 to-slate-800 text-xs font-semibold uppercase text-slate-200 ring-2 ring-slate-700">
+                                {user.name.charAt(0)}
+                            </span>
+                            <span className="flex flex-col items-start overflow-hidden leading-tight">
+                                <span className="w-full truncate text-sm font-semibold text-slate-100">
+                                    {user.name}
                                 </span>
-                                <ChevronUp className="h-4 w-4 shrink-0 text-slate-500 transition-colors group-hover:text-slate-300" />
-                            </button>
-                        </Dropdown.Trigger>
-                        <Dropdown.Content align="left">
-                            <Dropdown.Link href={route('profile.edit')}>
-                                Profile
-                            </Dropdown.Link>
-                            <Dropdown.Link
-                                href={route('logout')}
-                                method="post"
-                                as="button"
-                            >
-                                Cerrar sesión
-                            </Dropdown.Link>
-                        </Dropdown.Content>
-                    </Dropdown>
+                                <span className="w-full truncate text-xs text-slate-500">
+                                    {user.email}
+                                </span>
+                            </span>
+                        </span>
+                        <ChevronUp
+                            className={`h-4 w-4 shrink-0 text-slate-500 transition-all group-hover:text-slate-300 ${userMenuOpen ? '' : 'rotate-180'}`}
+                        />
+                    </button>
                 </div>
             </aside>
 
@@ -195,7 +210,7 @@ export default function Authenticated({
                         <Menu className="h-6 w-6" />
                     </button>
                     <span className="ml-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                        Glofit Admin
+                        GlowYa Admin
                     </span>
                 </header>
 

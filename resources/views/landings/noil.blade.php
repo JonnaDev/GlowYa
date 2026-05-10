@@ -532,7 +532,7 @@
 
     {{-- Footer --}}
     <footer class="py-10 px-6 text-center text-[11px] text-white/30 border-t border-white/5 bg-black">
-        <p>© {{ date('Y') }} Glofit · NOIL Starry Say. Todos los derechos reservados.</p>
+        <p>© {{ date('Y') }} GlowYa · NOIL Starry Say. Todos los derechos reservados.</p>
     </footer>
 
     <script>
