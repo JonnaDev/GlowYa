@@ -1,651 +1,314 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOIL — Starry Say Oiled Perfume Body Wash</title>
-    <meta name="description" content="El jabón corporal que huele a perfume todo el día. Limpieza profunda con efecto perlado y aroma envolvente de larga duración.">
+    <title>NOIL Body Wash — El gel que limpia profundo y huele a perfume todo el día</title>
+    <meta name="description" content="NOIL Starry Say: ácido salicílico suave, minerales marinos y fragancia encapsulada. Sin sulfatos agresivos. Limpieza profunda para piel masculina. Entrega a todo Colombia.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; }
+        :root {
+            --noil-blue: #38bdf8;
+            --noil-blue-dark: #0284c7;
+            --noil-black: #050a12;
+            --noil-surface: rgba(255,255,255,0.04);
+            --noil-border: rgba(56,189,248,0.18);
+        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--noil-black); color: #fff; overflow-x: hidden; }
+        h1,h2,h3,.display { font-family: 'Space Grotesk', system-ui, sans-serif; }
 
-        /* ----- Aurora background ----- */
-        .bg-aurora {
+        .bg-noil {
             background:
-                radial-gradient(ellipse 70% 60% at 50% -10%, rgba(56, 189, 248, 0.18), transparent 70%),
-                radial-gradient(ellipse 50% 50% at 90% 60%, rgba(251, 191, 36, 0.10), transparent 70%),
-                radial-gradient(ellipse 60% 60% at 10% 80%, rgba(56, 189, 248, 0.08), transparent 70%),
-                #000;
+                radial-gradient(ellipse 80% 60% at 50% -5%, rgba(56,189,248,0.15), transparent 65%),
+                radial-gradient(ellipse 50% 50% at 95% 50%, rgba(14,165,233,0.08), transparent 60%),
+                radial-gradient(ellipse 50% 60% at 5% 90%, rgba(56,189,248,0.07), transparent 60%),
+                var(--noil-black);
         }
-
-        /* ----- Entry animations ----- */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(28px); }
-            to   { opacity: 1; transform: translateY(0); }
+        .grid-lab {
+            background-image: linear-gradient(rgba(56,189,248,0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(56,189,248,0.05) 1px, transparent 1px);
+            background-size: 36px 36px;
         }
-        .anim-fade-up { animation: fadeUp .9s cubic-bezier(.2,.8,.2,1) forwards; opacity: 0; }
-        .anim-d1 { animation-delay: .15s; }
-        .anim-d2 { animation-delay: .35s; }
-        .anim-d3 { animation-delay: .55s; }
-        .anim-d4 { animation-delay: .80s; }
-
-        @keyframes pulseGold {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-            50%      { box-shadow: 0 0 0 16px rgba(251, 191, 36, 0); }
-        }
-
-        /* ----- Slide VS vertical ----- */
-        .vs-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 460px;
-            margin: 0 auto;
-            aspect-ratio: 9 / 16;
-            overflow: hidden;
-            border-radius: 28px;
-            box-shadow:
-                0 25px 80px -20px rgba(56, 189, 248, 0.35),
-                0 0 0 1px rgba(251, 191, 36, 0.18) inset;
-        }
-        .vs-layer {
-            position: absolute;
-            inset: 0;
-            background-size: cover;
-            background-position: center;
-        }
-        .vs-before { z-index: 2; clip-path: inset(0 50% 0 0); }
-        .vs-before-filter { filter: grayscale(.45) brightness(.85); }
-        .vs-after  { z-index: 1; }
-        .vs-input {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: ew-resize;
-            z-index: 10;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        .vs-line {
-            position: absolute;
-            top: 0; bottom: 0;
-            left: 50%;
-            width: 2px;
-            background: linear-gradient(to bottom,
-                transparent, #fff 18%, #fff 82%, transparent);
-            box-shadow: 0 0 20px rgba(255,255,255,.7);
-            z-index: 5;
-            pointer-events: none;
-            transform: translateX(-50%);
-        }
-        .vs-handle {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 56px; height: 56px;
-            background: linear-gradient(135deg, #fde68a 0%, #fbbf24 50%, #d97706 100%);
-            color: #0a0a0a;
-            border: 3px solid #fff;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 13px; letter-spacing: .5px;
-            box-shadow: 0 10px 32px rgba(251, 191, 36, 0.55);
-            pointer-events: none;
-            z-index: 6;
-            animation: pulseGold 2.4s infinite;
-        }
-        .vs-label {
-            position: absolute;
-            top: 16px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 999px;
-            backdrop-filter: blur(8px);
-            z-index: 4;
-        }
-        .vs-label-before { left: 16px; background: rgba(0,0,0,.5); color: #fca5a5; border: 1px solid rgba(252,165,165,.3); }
-        .vs-label-after  { right: 16px; background: rgba(0,0,0,.5); color: #fbbf24; border: 1px solid rgba(251,191,36,.4); }
-
-        /* ----- Sparkles ----- */
-        @keyframes sparkle {
-            0%, 100% { opacity: 0; transform: scale(.4); }
-            50%      { opacity: 1; transform: scale(1.2); }
-        }
-        .sparkle {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 0 10px 2px rgba(255,255,255,.85);
-            animation: sparkle 2.4s infinite ease-in-out;
-            pointer-events: none;
-        }
-
-        /* ----- Glass panels ----- */
         .glass {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-gold {
-            background:
-                linear-gradient(135deg, rgba(251,191,36,0.06), rgba(56,189,248,0.04)),
-                rgba(0, 0, 0, 0.4);
+            background: rgba(255,255,255,0.04);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(251, 191, 36, 0.25);
+            border: 1px solid var(--noil-border);
         }
-
-        /* ----- Breathing animation ----- */
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); border-color: rgba(251,191,36,0.25); box-shadow: 0 0 0 0 rgba(251,191,36,0); }
-            50%      { transform: scale(1.012); border-color: rgba(251,191,36,0.5); box-shadow: 0 0 40px -10px rgba(251,191,36,0.2); }
+        .glass-strong {
+            background: linear-gradient(135deg, rgba(56,189,248,0.07), rgba(2,132,199,0.04));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(56,189,248,0.25);
+            box-shadow: 0 30px 80px -20px rgba(2,132,199,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
         }
-        .breathe { animation: breathe 5s ease-in-out infinite; }
-
-        /* ----- Buttons ----- */
-        .btn-gold {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: .65rem;
-            padding: 1rem 2.2rem;
-            border-radius: 9999px;
-            font-weight: 800;
-            font-size: .95rem;
-            letter-spacing: .01em;
-            background: linear-gradient(135deg, #fde68a 0%, #fbbf24 50%, #d97706 100%);
-            color: #0a0a0a;
-            box-shadow: 0 12px 40px -10px rgba(251, 191, 36, 0.55);
-            transition: transform .25s ease, box-shadow .25s ease;
-        }
-        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 18px 50px -10px rgba(251, 191, 36, 0.75); }
-        .btn-gold:active { transform: translateY(0); }
-
-        .btn-sky {
+        .btn-noil {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            gap: .65rem; padding: 1rem 2.2rem; border-radius: 9999px; font-weight: 800;
+            font-size: .95rem; letter-spacing: .01em;
             background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 50%, #0284c7 100%);
-            color: #0a0a0a;
-            box-shadow: 0 12px 40px -10px rgba(56, 189, 248, 0.6);
+            color: #050a12;
+            box-shadow: 0 14px 40px -10px rgba(56,189,248,0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+            transition: transform .25s ease, box-shadow .25s ease; overflow: hidden;
         }
-        .btn-sky:hover { box-shadow: 0 18px 50px -10px rgba(56, 189, 248, 0.85); }
+        .btn-noil:hover { transform: translateY(-3px); box-shadow: 0 22px 55px -12px rgba(56,189,248,0.75); }
+        .btn-noil:active { transform: translateY(-1px); }
 
-        /* ----- Reveal on scroll ----- */
-        .reveal { opacity: 0; transform: translateY(40px); transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1); }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: .5rem;
+            padding: .4rem .9rem; border-radius: 999px;
+            background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.25);
+            font-size: 10px; font-weight: 800; letter-spacing: 0.18em;
+            text-transform: uppercase; color: #7dd3fc;
+        }
+        .eyebrow .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #38bdf8; box-shadow: 0 0 10px #38bdf8;
+            animation: pulse-dot 1.6s ease-in-out infinite;
+        }
+        @keyframes pulse-dot { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+        .text-gradient { background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 50%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+        .vertical-card {
+            position: relative; width: 100%; max-width: 420px; margin: 0 auto;
+            aspect-ratio: 9/16; border-radius: 28px; overflow: hidden;
+            box-shadow: 0 40px 100px -30px rgba(56,189,248,0.35), 0 0 0 1px rgba(56,189,248,0.18);
+        }
+        .vertical-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .vc-tag {
+            display: inline-flex; align-items: center; gap: .4rem;
+            padding: .3rem .75rem; border-radius: 999px;
+            font-size: 10px; font-weight: 800; letter-spacing: 0.18em;
+            text-transform: uppercase; margin-bottom: .65rem;
+        }
+        .vc-tag-pain { background: rgba(244,63,94,0.2); color: #fb7185; border: 1px solid rgba(244,63,94,0.3); }
+        .vc-tag-solution { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.35); }
+
+        .feature-card {
+            padding: 1.75rem 1.5rem; border-radius: 20px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(56,189,248,0.12);
+            transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+        }
+        .feature-card:hover { transform: translateY(-6px); border-color: rgba(56,189,248,0.35); box-shadow: 0 30px 70px -20px rgba(2,132,199,0.3); }
+        .feature-icon {
+            display: inline-flex; width: 52px; height: 52px; border-radius: 16px;
+            background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(2,132,199,0.2));
+            border: 1px solid rgba(56,189,248,0.2); color: #38bdf8;
+            align-items: center; justify-content: center; font-size: 20px; margin-bottom: 1rem;
+        }
+
+        @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        .marquee { display: flex; gap: 3rem; width: max-content; animation: marquee 28s linear infinite; }
+        .marquee-item { display: inline-flex; align-items: center; gap: .5rem; font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #7dd3fc; opacity: .7; }
+
+        .reveal { opacity: 0; transform: translateY(36px); transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1); }
         .reveal.in { opacity: 1; transform: translateY(0); }
+        .reveal-scale { opacity: 0; transform: scale(.93); transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1); }
+        .reveal-scale.in { opacity: 1; transform: scale(1); }
 
-        /* ----- Form ----- */
+        .stat-num { font-family: 'Space Grotesk',sans-serif; font-size: clamp(2.2rem,5vw,3.5rem); font-weight: 800; line-height: 1; background: linear-gradient(135deg, #7dd3fc, #38bdf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+        .floating-cta { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 60; opacity: 0; transform: translateY(20px) scale(.9); transition: opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
+        .floating-cta.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(56,189,248,.55),0 18px 40px -10px rgba(2,132,199,.55)} 70%{box-shadow:0 0 0 16px rgba(56,189,248,0),0 22px 55px -12px rgba(2,132,199,.65)} 100%{box-shadow:0 0 0 0 rgba(56,189,248,0),0 18px 40px -10px rgba(2,132,199,.55)} }
+        .floating-cta.visible { animation: pulse-ring 2.4s ease-out infinite; }
+
+        .faq-item summary { cursor: pointer; list-style: none; }
+        .faq-item summary::-webkit-details-marker { display: none; }
+        .faq-item[open] .faq-icon { transform: rotate(45deg); }
+        .faq-icon { transition: transform .3s ease; }
+
         .form-input {
-            width: 100%;
-            padding: .9rem 1rem;
-            border-radius: .85rem;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.10);
-            color: #fff;
-            font-size: .95rem;
-            transition: all .2s;
+            width: 100%; padding: .9rem 1rem; border-radius: .85rem;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(56,189,248,0.18);
+            color: #fff; font-size: .95rem; transition: all .2s;
         }
-        .form-input:focus {
-            outline: none;
-            border-color: #fbbf24;
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.12);
-        }
+        .form-input:focus { outline: none; border-color: #38bdf8; background: rgba(56,189,248,0.06); box-shadow: 0 0 0 4px rgba(56,189,248,0.12); }
         .form-input::placeholder { color: rgba(255,255,255,0.28); }
-        .form-label {
-            font-size: .65rem;
-            font-weight: 600;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.55);
-            margin-bottom: .5rem;
-            display: block;
-        }
-        select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fbbf24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .9rem center; background-size: 1.1rem; appearance: none; padding-right: 2.5rem; }
-        select.form-input option { background: #0a0a0a; color: #fff; }
-
-        /* ----- Misc ----- */
-        .text-gradient {
-            background: linear-gradient(135deg, #fde68a 0%, #fbbf24 35%, #38bdf8 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .grain::before {
-            content: ''; position: absolute; inset: 0; pointer-events: none;
-            background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
-            background-size: 4px 4px;
-            mix-blend-mode: overlay;
-        }
+        .form-label { font-size: .65rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(56,189,248,0.8); margin-bottom: .5rem; display: block; }
+        select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338bdf8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .9rem center; background-size: 1.1rem; appearance: none; padding-right: 2.5rem; }
+        select.form-input option { background: #0a131e; color: #fff; }
     </style>
 </head>
-<body class="bg-black text-white antialiased overflow-x-hidden">
+<body class="antialiased">
 
-    {{-- Nav fija --}}
-    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/40 border-b border-white/5">
+    {{-- NAV --}}
+    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/50 border-b border-sky-400/10">
         <div class="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
-            <a href="#" class="flex items-center gap-2 text-lg font-black tracking-tight">
-                <span class="text-amber-400">NOIL</span><span class="text-sky-400">.</span>
+            <a href="#" class="flex items-center gap-2 text-base font-black tracking-tight">
+                <span class="inline-flex w-7 h-7 rounded-lg items-center justify-center bg-gradient-to-br from-sky-400 to-sky-700 text-black text-xs"><i class="fa-solid fa-droplet"></i></span>
+                <span class="text-white">NOIL</span><span class="text-sky-400">.</span>
+                <span class="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.18em] text-sky-400 ml-1">Body Wash</span>
             </a>
-            <a href="#comprar" class="px-5 py-2 rounded-full text-xs font-bold bg-white/8 border border-white/10 hover:bg-white/15 transition">
+            <a href="#comprar" class="px-5 py-2 rounded-full text-xs font-bold bg-sky-500/10 border border-sky-400/25 text-sky-300 hover:bg-sky-500/20 transition">
                 Pedir ahora
             </a>
         </div>
     </nav>
 
-    {{-- HERO vertical --}}
-    <section class="bg-aurora min-h-screen pt-28 pb-16 px-6 flex flex-col items-center justify-center text-center relative">
+    {{-- HERO --}}
+    <section class="bg-noil relative pt-32 pb-20 px-6 min-h-screen flex flex-col items-center justify-center text-center overflow-hidden">
+        <div class="absolute inset-0 grid-lab opacity-40 pointer-events-none"></div>
+        <div id="hero-particles" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
-        <div class="max-w-2xl">
-            {{-- Badge --}}
-            <div class="anim-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full glass-gold text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                Lanzamiento exclusivo
-            </div>
+        <div class="relative max-w-3xl">
+            <span class="eyebrow"><span class="dot"></span>Fórmula masculina · Uso diario seguro</span>
 
-            {{-- Title --}}
-            <h1 class="anim-fade-up anim-d1 mt-7 text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] tracking-tight">
-                <span class="block">El jabón que</span>
-                <span class="block text-gradient">huele a perfume</span>
-                <span class="block">todo el día</span>
+            <h1 class="display mt-7 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight">
+                Tu piel limpia y sin granitos.<br>
+                <span class="text-gradient">El olor que dura todo el día.</span>
             </h1>
 
-            <p class="anim-fade-up anim-d2 mt-6 text-base md:text-lg text-white/65 font-light max-w-xl mx-auto leading-relaxed">
-                NOIL Starry Say. Limpieza profunda con efecto perlado y un aroma envolvente que dura horas en tu piel.
-            </p>
-        </div>
-
-        {{-- Slide VS --}}
-        <div class="anim-fade-up anim-d3 mt-12 w-full">
-            <p class="text-[10px] text-white/40 uppercase tracking-[0.22em] mb-4">
-                <i class="fa-solid fa-arrows-left-right mr-2 text-amber-400"></i>
-                Desliza para ver la diferencia
+            <p class="mt-7 text-base md:text-lg text-white/60 font-light max-w-2xl mx-auto leading-relaxed">
+                <strong class="font-semibold text-white">NOIL Body Wash</strong> combina ácido salicílico suave, minerales marinos y fragancia encapsulada de liberación lenta para una limpieza profunda que no irrita ni reseca.
+                <strong class="font-semibold text-sky-300">Diferencia visible en la primera semana.</strong>
             </p>
 
-            <div class="vs-wrapper grain" id="vs-wrapper">
-                {{-- After (NOIL solution) --}}
-                <div class="vs-layer vs-after"
-                     data-bg="{{ asset('images_landings/noil-solution.png') }}">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    <div id="sparkles" class="absolute inset-0 pointer-events-none"></div>
-                </div>
-
-                {{-- Before (pain) --}}
-                <div class="vs-layer vs-before vs-before-filter" id="vs-before"
-                     data-bg="{{ asset('images_landings/noil-pain.png') }}">
-                    <div class="absolute inset-0 bg-black/30"></div>
-                </div>
-
-                <span class="vs-label vs-label-before">Antes</span>
-                <span class="vs-label vs-label-after">Con NOIL</span>
-
-                <input type="range" min="0" max="100" value="50" class="vs-input" id="vs-input" aria-label="Comparador">
-                <div class="vs-line" id="vs-line">
-                    <div class="vs-handle">VS</div>
-                </div>
-            </div>
-        </div>
-
-        {{-- CTA hero --}}
-        <div class="anim-fade-up anim-d4 mt-12 flex flex-col items-center gap-3">
-            <a href="#comprar" class="btn-gold">
-                Pedir el mío ahora
-                <i class="fa-solid fa-arrow-down text-xs"></i>
-            </a>
-            <p class="text-[11px] text-white/40">
-                <i class="fa-solid fa-truck-fast text-amber-400/70 mr-1"></i> Pago contra entrega ·
-                <i class="fa-solid fa-shield-halved text-sky-400/70 ml-1 mr-1"></i> Envío 24-72 hrs
-            </p>
-        </div>
-    </section>
-
-    {{-- FORMULARIO --}}
-    <section id="comprar" class="relative bg-aurora py-24 px-6">
-        <div class="max-w-xl mx-auto reveal">
-            <div class="glass-gold breathe rounded-3xl p-6 sm:p-10 relative overflow-hidden">
-                <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-amber-400/10 blur-3xl pointer-events-none"></div>
-                <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-sky-400/10 blur-3xl pointer-events-none"></div>
-
-                <div class="relative">
-                    <h2 class="text-3xl sm:text-4xl font-black tracking-tight">
-                        Tu pedido en <span class="text-amber-400">2 minutos</span>
-                    </h2>
-                    <p class="mt-2 text-white/55 text-sm">
-                        Pago contra entrega. Te llamamos para confirmar antes de despachar.
-                    </p>
-
-                    @if(session('success'))
-                        <div class="mt-6 flex items-start gap-3 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-sm">
-                            <i class="fa-solid fa-circle-check mt-0.5"></i>
-                            <p>{{ session('success') }}</p>
-                        </div>
-                    @endif
-
-                    @if($errors->any())
-                        <div class="mt-6 flex items-start gap-3 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-200 text-sm">
-                            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-                            <div class="space-y-0.5">
-                                @foreach($errors->all() as $error)
-                                    <p>{{ $error }}</p>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
-                    <form action="{{ route('landing.order', ['slug' => $landing->slug]) }}" method="POST" class="mt-8 space-y-4">
-                        @csrf
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Nombre completo</label>
-                                <input name="full_name" type="text" required class="form-input"
-                                       value="{{ old('full_name') }}" placeholder="Camila Rodríguez">
-                            </div>
-                            <div>
-                                <label class="form-label">Cédula</label>
-                                <input name="id_number" type="text" required class="form-input"
-                                       value="{{ old('id_number') }}" placeholder="1023456789">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Celular</label>
-                                <input name="phone" type="tel" required class="form-input"
-                                       value="{{ old('phone') }}" placeholder="3001234567">
-                            </div>
-                            <div>
-                                <label class="form-label">Email</label>
-                                <input name="email" type="email" required class="form-input"
-                                       value="{{ old('email') }}" placeholder="tu@email.com">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Departamento</label>
-                                <select name="department" required class="form-input">
-                                    <option value="">Selecciona…</option>
-                                    @foreach([
-                                        'Amazonas','Antioquia','Arauca','Atlántico','Bogotá D.C.',
-                                        'Bolívar','Boyacá','Caldas','Caquetá','Casanare','Cauca',
-                                        'Cesar','Chocó','Córdoba','Cundinamarca','Guainía','Guaviare',
-                                        'Huila','La Guajira','Magdalena','Meta','Nariño',
-                                        'Norte de Santander','Putumayo','Quindío','Risaralda',
-                                        'San Andrés y Providencia','Santander','Sucre','Tolima',
-                                        'Valle del Cauca','Vaupés','Vichada'
-                                    ] as $dept)
-                                        <option value="{{ $dept }}" {{ old('department') === $dept ? 'selected' : '' }}>{{ $dept }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">Ciudad</label>
-                                <input name="city" type="text" required class="form-input"
-                                       value="{{ old('city') }}" placeholder="Bogotá">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Barrio (opcional)</label>
-                                <input name="neighborhood" type="text" class="form-input"
-                                       value="{{ old('neighborhood') }}" placeholder="Chapinero">
-                            </div>
-                            <div>
-                                <label class="form-label">Cantidad</label>
-                                <input name="quantity" type="number" min="1" max="5" required class="form-input"
-                                       value="{{ old('quantity', 1) }}">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="form-label">Dirección</label>
-                            <input name="address" type="text" required class="form-input"
-                                   value="{{ old('address') }}" placeholder="Cra 7 # 32-15 apto 502">
-                        </div>
-
-                        <div>
-                            <label class="form-label">Notas para el courier (opcional)</label>
-                            <textarea name="notes" rows="2" class="form-input"
-                                      placeholder="Tocar timbre 3 veces, edificio rejas blancas…">{{ old('notes') }}</textarea>
-                        </div>
-
-                        {{-- Resumen de precio — total se actualiza en vivo según cantidad --}}
-                        <div class="mt-2 rounded-2xl border border-amber-400/25 bg-gradient-to-br from-amber-500/[0.07] via-white/[0.02] to-sky-500/[0.05] p-5">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-white/55">Precio por unidad</span>
-                                <span class="font-semibold text-white/85">
-                                    $<span data-price-unit-display>{{ number_format((float) $product->price, 0, ',', '.') }}</span>
-                                    <span class="text-[11px] text-white/40 ml-0.5">COP</span>
-                                </span>
-                            </div>
-                            <div class="mt-1.5 flex items-center justify-between text-sm">
-                                <span class="text-white/55">Cantidad</span>
-                                <span class="font-semibold text-white/85" data-qty-display>{{ (int) old('quantity', 1) }}</span>
-                            </div>
-
-                            <div class="my-3 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
-
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">Total a pagar</span>
-                                <span class="text-2xl font-black text-amber-400 transition-all" data-total-wrapper>
-                                    $<span data-total-display>{{ number_format((float) $product->price * (int) old('quantity', 1), 0, ',', '.') }}</span>
-                                    <span class="text-xs text-amber-400/70 font-semibold ml-0.5">COP</span>
-                                </span>
-                            </div>
-                            <p class="mt-2 text-[10px] text-white/35 text-center">
-                                <i class="fa-solid fa-truck-fast text-amber-400/60 mr-1"></i>
-                                Envío incluido · Pagas al recibir
-                            </p>
-                        </div>
-
-                        <button type="submit" class="btn-gold w-full mt-6">
-                            Confirmar mi pedido
-                            <i class="fa-solid fa-arrow-right text-xs"></i>
-                        </button>
-
-                        <p class="text-center text-[11px] text-white/40 mt-4">
-                            <i class="fa-solid fa-lock text-amber-400/60 mr-1"></i>
-                            Pago contra entrega · Tus datos están protegidos
-                        </p>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- TESTIMONIOS zigzag --}}
-    <section class="bg-aurora py-24 px-6">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="reveal text-3xl sm:text-5xl font-black text-center tracking-tight mb-4">
-                Lo que dicen <span class="text-amber-400">quienes ya lo tienen</span>
-            </h2>
-            <p class="reveal text-center text-white/55 mb-16 max-w-xl mx-auto">
-                Más de +5.000 personas en Colombia ya cambiaron su rutina.
-            </p>
-
-            <div class="space-y-10">
-                {{-- Izquierda --}}
-                <div class="reveal flex justify-start">
-                    <div class="w-full md:w-2/3 glass-gold breathe rounded-2xl p-6 md:p-8 relative">
-                        <i class="fa-solid fa-quote-left absolute -top-3 -left-3 text-2xl text-amber-400/60 bg-black rounded-full p-2 border border-amber-400/30"></i>
-                        <div class="flex text-amber-400 mb-3 text-sm gap-0.5">
-                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                        </div>
-                        <p class="text-white/85 leading-relaxed">
-                            "Odiaba salir de la ducha y sentir que el olor a limpio se iba en 5 minutos. Con NOIL la textura perlada me encanta y mi piel huele delicioso todo el día."
-                        </p>
-                        <p class="mt-4 text-sm font-bold text-amber-300">— Camila R. <span class="text-white/40 font-normal ml-1">· Bogotá</span></p>
-                    </div>
-                </div>
-
-                {{-- Derecha --}}
-                <div class="reveal flex justify-end">
-                    <div class="w-full md:w-2/3 glass-gold breathe rounded-2xl p-6 md:p-8 relative">
-                        <i class="fa-solid fa-quote-left absolute -top-3 -right-3 text-2xl text-amber-400/60 bg-black rounded-full p-2 border border-amber-400/30"></i>
-                        <div class="flex text-amber-400 mb-3 text-sm gap-0.5">
-                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                        </div>
-                        <p class="text-white/85 leading-relaxed">
-                            "Sufro de piel reseca y los geles normales me irritaban. Desde el Starry Say siento la piel hidratada todo el día. El cambio es real."
-                        </p>
-                        <p class="mt-4 text-sm font-bold text-amber-300">— Valentina M. <span class="text-white/40 font-normal ml-1">· Medellín</span></p>
-                    </div>
-                </div>
-
-                {{-- Izquierda --}}
-                <div class="reveal flex justify-start">
-                    <div class="w-full md:w-2/3 glass-gold breathe rounded-2xl p-6 md:p-8 relative">
-                        <i class="fa-solid fa-quote-left absolute -top-3 -left-3 text-2xl text-amber-400/60 bg-black rounded-full p-2 border border-amber-400/30"></i>
-                        <div class="flex text-amber-400 mb-3 text-sm gap-0.5">
-                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                        </div>
-                        <p class="text-white/85 leading-relaxed">
-                            "Compré uno para probar y ya pedí 3 más. Es literalmente perfume y jabón al mismo tiempo. Súper recomendado para el día a día."
-                        </p>
-                        <p class="mt-4 text-sm font-bold text-amber-300">— Laura G. <span class="text-white/40 font-normal ml-1">· Cali</span></p>
-                    </div>
-                </div>
+            <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs font-semibold text-white/50">
+                <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-flask text-sky-400"></i> Ácido Salicílico Suave</span>
+                <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-sky-400"></i> Sin Sulfatos Agresivos</span>
+                <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-leaf text-sky-400"></i> Fragancia 8h</span>
+                <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-microscope text-sky-400"></i> Minerales Marinos</span>
             </div>
 
-            {{-- CTA final --}}
-            <div class="reveal mt-20 text-center">
-                <h3 class="text-2xl sm:text-4xl font-black tracking-tight mb-3">
-                    ¿Listo para sentirlo en tu piel?
-                </h3>
-                <p class="text-white/55 mb-8">Pago contra entrega. Envío en 24-72 horas.</p>
-                <a href="#comprar" class="btn-gold">
-                    Comprar ahora
-                    <i class="fa-solid fa-arrow-up text-xs"></i>
+            <div class="mt-10 flex flex-col items-center gap-3">
+                <a href="#comprar" class="btn-noil">
+                    Quiero mi NOIL Body Wash
+                    <i class="fa-solid fa-arrow-down text-xs"></i>
                 </a>
+                <p class="text-[11px] text-white/40 font-medium">
+                    <i class="fa-solid fa-truck-fast text-sky-400/70 mr-1"></i>Pago contra entrega ·
+                    <i class="fa-solid fa-shield-halved text-sky-400/70 ml-1 mr-1"></i>Envío 24-72 hrs Colombia
+                </p>
             </div>
+
+            <div class="mt-14 grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <div class="reveal">
+                    <div class="stat-num" data-counter data-target="380">0</div>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white/40">reseñas<br>verificadas</p>
+                </div>
+                <div class="reveal">
+                    <div class="stat-num" data-counter data-target="8">0</div>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white/40">horas de<br>fragancia</p>
+                </div>
+                <div class="reveal">
+                    <div class="stat-num" data-counter data-target="4">0</div>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white/40">activos<br>clave</p>
+                </div>
+            </div>
+        </div>
+
+        <a href="#dolor" class="absolute bottom-6 left-1/2 -translate-x-1/2 text-sky-400 hover:text-sky-300 transition" aria-label="Bajar">
+            <i class="fa-solid fa-chevron-down text-2xl animate-bounce"></i>
+        </a>
+    </section>
+
+    {{-- MARQUEE --}}
+    <section class="relative py-8 border-y border-sky-400/15 overflow-hidden" style="background:rgba(56,189,248,0.04)">
+        <div class="marquee">
+            @php $items = ['Ácido Salicílico Suave','Sin Sulfatos Agresivos','Minerales Marinos','pH Balanceado','Sin Parabenos','Fragancia 8h','Piel Masculina','Cruelty Free','Uso Diario Seguro','Test Dermatológico','Ácido Salicílico Suave','Sin Sulfatos Agresivos','Minerales Marinos','pH Balanceado','Sin Parabenos','Fragancia 8h','Piel Masculina','Cruelty Free','Uso Diario Seguro','Test Dermatológico']; @endphp
+            @foreach($items as $item)
+                <span class="marquee-item">
+                    <i class="fa-solid fa-circle text-[5px] text-sky-400"></i>
+                    {{ $item }}
+                </span>
+            @endforeach
         </div>
     </section>
 
-    {{-- Footer --}}
-    <footer class="py-10 px-6 text-center text-[11px] text-white/30 border-t border-white/5 bg-black">
-        <p>© {{ date('Y') }} GlowYa · NOIL Starry Say. Todos los derechos reservados.</p>
-    </footer>
+    {{-- DOLOR --}}
+    <section id="dolor" class="bg-noil relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 grid-lab opacity-25 pointer-events-none"></div>
+        <div class="relative max-w-4xl mx-auto text-center mb-14">
+            <span class="eyebrow reveal" style="background:rgba(244,63,94,0.12);border-color:rgba(244,63,94,0.25);color:#fb7185;">
+                <span class="dot" style="background:#f43f5e;box-shadow:0 0 10px #fb7185;"></span>
+                El problema real
+            </span>
+            <h2 class="reveal display mt-6 text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+                La piel que no huele bien<br><span class="text-gradient">es la que nadie te dice que notan</span>
+            </h2>
+            <p class="reveal mt-5 text-base sm:text-lg text-white/55 max-w-2xl mx-auto leading-relaxed">
+                Granitos en espalda, olor que se va en 2 horas y la sensación de que el gel que usas no hace nada real. El problema no eres tú — es el producto.
+            </p>
+        </div>
 
-    <script>
-    window.NOIL_PRICE_PER_UNIT = {{ (float) $product->price }};
-    </script>
-    <script>
-    (() => {
-        document.addEventListener('DOMContentLoaded', () => {
-            // ---- Aplicar background-image desde data-bg ----
-            document.querySelectorAll('[data-bg]').forEach(el => {
-                el.style.backgroundImage = `url('${el.dataset.bg}')`;
-            });
+        <div class="reveal-scale max-w-lg mx-auto">
+            <div class="vertical-card">
+                <img src="{{ asset('images_landings/noil/noilbodywash-pain.png') }}" alt="Piel con granitos e irritación — problema que NOIL resuelve">
+            </div>
+            <ul class="mt-10 space-y-3 max-w-md mx-auto text-white/80">
+                <span class="vc-tag vc-tag-pain"><i class="fa-solid fa-heart-crack text-[9px]"></i> El dolor invisible</span>
+                <p class="text-base sm:text-lg font-semibold leading-snug text-white">
+                    "Llevo años con granitos en la espalda y ningún gel del mercado los quita."
+                </p>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 items-center justify-center text-[10px]"><i class="fa-solid fa-xmark"></i></span>
+                    <p>Geles con sulfatos que irritan, resecan y empeoran la situación.</p>
+                </li>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 items-center justify-center text-[10px]"><i class="fa-solid fa-xmark"></i></span>
+                    <p>Fragancias que se evaporan antes de salir del baño.</p>
+                </li>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 items-center justify-center text-[10px]"><i class="fa-solid fa-xmark"></i></span>
+                    <p>Poros tapados, espalda llena de granitos, piel sin vida.</p>
+                </li>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 items-center justify-center text-[10px]"><i class="fa-solid fa-xmark"></i></span>
+                    <p>Pagar más de $40.000 por algo que no hace diferencia real.</p>
+                </li>
+            </ul>
+        </div>
+    </section>
 
-            // ---- Total dinámico (cantidad × precio) ----
-            const PRICE = Number(window.NOIL_PRICE_PER_UNIT) || 0;
-            const formatCOP = (n) => Math.round(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+    {{-- SOLUCIÓN --}}
+    <section class="relative py-24 px-6 overflow-hidden" style="background:linear-gradient(180deg,rgba(56,189,248,0.06) 0%,var(--noil-black) 100%)">
+        <div class="absolute inset-0 grid-lab opacity-20 pointer-events-none"></div>
+        <div class="relative max-w-4xl mx-auto text-center mb-14">
+            <span class="eyebrow reveal"><span class="dot"></span>La solución clínica</span>
+            <h2 class="reveal display mt-6 text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+                Un gel que <span class="text-gradient">trabaja de verdad</span><br>desde la primera semana
+            </h2>
+            <p class="reveal mt-5 text-base sm:text-lg text-white/55 max-w-2xl mx-auto leading-relaxed">
+                NOIL combina <strong class="text-white">ácido salicílico suave + minerales marinos + fragancia encapsulada</strong> — los activos que disuelven el sebo, equilibran el pH y dejan un olor que dura hasta 8 horas sin irritar.
+            </p>
+        </div>
 
-            const qtyInput   = document.querySelector('input[name="quantity"]');
-            const qtyDisplay = document.querySelector('[data-qty-display]');
-            const totalEl    = document.querySelector('[data-total-display]');
-            const totalWrap  = document.querySelector('[data-total-wrapper]');
-
-            const updateTotal = () => {
-                const raw = parseInt(qtyInput?.value, 10);
-                const qty = Math.min(5, Math.max(1, Number.isFinite(raw) ? raw : 1));
-                if (qtyDisplay) qtyDisplay.textContent = String(qty);
-                if (totalEl)    totalEl.textContent    = formatCOP(qty * PRICE);
-                // micro pulse para feedback visual
-                if (totalWrap) {
-                    totalWrap.classList.remove('scale-105');
-                    void totalWrap.offsetWidth;
-                    totalWrap.classList.add('scale-105');
-                    setTimeout(() => totalWrap.classList.remove('scale-105'), 180);
-                }
-            };
-
-            if (qtyInput) {
-                qtyInput.addEventListener('input',  updateTotal);
-                qtyInput.addEventListener('change', updateTotal);
-                updateTotal();
-            }
-
-            // ---- VS slider ----
-            const slider = document.getElementById('vs-input');
-            const before = document.getElementById('vs-before');
-            const line   = document.getElementById('vs-line');
-
-            const update = (v) => {
-                const val = Math.max(0, Math.min(100, v));
-                before.style.clipPath = `inset(0 ${100 - val}% 0 0)`;
-                line.style.left = `${val}%`;
-            };
-            slider.addEventListener('input', e => update(+e.target.value));
-
-            // ---- Sparkles ----
-            const container = document.getElementById('sparkles');
-            for (let i = 0; i < 14; i++) {
-                const s = document.createElement('div');
-                s.className = 'sparkle';
-                const size = Math.random() * 4 + 2;
-                s.style.width = size + 'px';
-                s.style.height = size + 'px';
-                s.style.left = (50 + Math.random() * 50) + '%';
-                s.style.top = Math.random() * 100 + '%';
-                s.style.animationDelay = Math.random() * 2.4 + 's';
-                container.appendChild(s);
-            }
-
-            // ---- Reveal on scroll ----
-            const reveals = document.querySelectorAll('.reveal');
-            const io = new IntersectionObserver((entries) => {
-                entries.forEach(e => {
-                    if (e.isIntersecting) {
-                        e.target.classList.add('in');
-                        io.unobserve(e.target);
-                    }
-                });
-            }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-            reveals.forEach(r => io.observe(r));
-
-            // ---- Hint animation del slider VS al cargar ----
-            setTimeout(() => {
-                let v = 50, dir = -1, steps = 0;
-                const hint = setInterval(() => {
-                    v += dir * 2; steps++;
-                    update(v);
-                    slider.value = v;
-                    if (v <= 32) dir = 1;
-                    if (steps > 20) {
-                        clearInterval(hint);
-                        const ret = setInterval(() => {
-                            if (v < 50) { v++; update(v); slider.value = v; }
-                            else clearInterval(ret);
-                        }, 18);
-                    }
-                }, 28);
-            }, 1700);
-
-            // ---- Smooth scroll ----
-            document.querySelectorAll('a[href^="#"]').forEach(a => {
-                a.addEventListener('click', e => {
-                    const id = a.getAttribute('href');
-                    if (id.length > 1) {
-                        const target = document.querySelector(id);
-                        if (target) {
-                            e.preventDefault();
-                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    }
-                });
-            });
-        });
-    })();
-    </script>
+        <div class="reveal-scale max-w-lg mx-auto">
+            <div class="vertical-card">
+                <img src="{{ asset('images_landings/noil/noilbodywash-solution.png') }}" alt="Piel limpia y sin granitos con NOIL Body Wash">
+            </div>
+            <ul class="mt-10 space-y-3 max-w-md mx-auto text-white/80">
+                <span class="vc-tag vc-tag-solution"><i class="fa-solid fa-sparkles text-[9px]"></i> El cuerpo que proyectas</span>
+                <p class="text-base sm:text-lg font-semibold leading-snug text-white">
+                    "Por primera vez siento que mi piel está limpia de verdad y el olor aguanta el día."
+                </p>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 items-center justify-center text-[10px]"><i class="fa-solid fa-check"></i></span>
+                    <p>Ácido salicílico disuelve el sebo sin agredir la barrera cutánea.</p>
+                </li>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 items-center justify-center text-[10px]"><i class="fa-solid fa-check"></i></span>
+                    <p>Minerales marinos equilibran el pH y reducen la inflamación activa.</p>
+                </li>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 items-center justify-center text-[10px]"><i class="fa-solid fa-check"></i></span>
+                    <p>Sin sulfatos — limpieza profunda sin resecar ni irritar.</p>
+                </li>
+                <li class="reveal flex gap-3 items-start">
+                    <span class="mt-1 inline-flex w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 items-center justify-center text-[10px]"><i class="fa-solid fa-check"></i></span>
+                    <p>Fragancia encapsulada de liberación lenta — dura hasta 8 horas.</p>
+                </li>
+            </ul>
+        </div>
+        <div class="reveal mt-14 text-center">
+            <a href="#comprar" class="btn-noil">Quiero probar NOIL <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </div>
+    </section>
 </body>
 </html>
