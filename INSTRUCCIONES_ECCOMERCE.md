@@ -368,36 +368,36 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 ## 13. Checklist de inicio del proyecto
 
 - [X] Crear repo Git, estructura modular base
-- [ ] Configurar Cloudflare frente al dominio
+- [PENDING] Configurar Cloudflare frente al dominio
 - [X] Crear app en Shopify Partners y obtener credenciales
-- [ ] Crear cuenta Sentry y configurar `sentry/sentry-laravel`
+- [PENDING] Crear cuenta Sentry y configurar `sentry/sentry-laravel`
 - [X] Implementar tabla `orders` con `idempotency_key`
 - [X] Implementar `SendOrderToShopifyJob` con reintentos
-- [ ] Configurar crontab con `schedule:run` + `queue:work --stop-when-empty`
-- [x] Implementar verificación HMAC de webhooks Shopify (`VerifyShopifyWebhook` middleware — HMAC-SHA256 con `SHOPIFY_WEBHOOK_SECRET`)
-- [ ] Implementar comando `orders:reconcile`
-- [ ] SEO base: sitemap, meta tags dinámicos, JSON-LD
-- [ ] Definir estructura de URLs (subdominio vs subcarpeta) — **antes de publicar**
-- [ ] Tablas `reviews` y `review_invitations` con FK a `order_items` y `products`
-- [ ] `SendReviewRequestEmailJob` con magic link (`URL::temporarySignedRoute`, 30 días)
-- [ ] Vista pública de formulario de reseña (sin auth, validada por firma)
-- [ ] Cola de moderación de reseñas en panel admin (aprobar / rechazar / spam)
-- [ ] Decidir storage de fotos de reseña (Cloudflare R2 / Bunny vs `storage/app/public`) — variable `REVIEWS_DISK`
-- [ ] Sección "Confía en nosotros" en home con reseñas globales aprobadas (cacheada)
+- [X] Configurar crontab con `schedule:run` + `queue:work --stop-when-empty`
+- [X] Implementar verificación HMAC de webhooks Shopify (`VerifyShopifyWebhook` middleware — HMAC-SHA256 con `SHOPIFY_WEBHOOK_SECRET`)
+- [PENDING] Implementar comando `orders:reconcile`
+- [PENDING] SEO base: sitemap, meta tags dinámicos, JSON-LD
+- [PENDING] Definir estructura de URLs (subdominio vs subcarpeta) — **antes de publicar**
+- [X] Tablas `reviews` y `review_invitations` con FK a `order_items` y `products`
+- [PENDING] `SendReviewRequestEmailJob` con magic link (`URL::temporarySignedRoute`, 30 días)
+- [PENDING] Vista pública de formulario de reseña (sin auth, validada por firma)
+- [PENDING] Cola de moderación de reseñas en panel admin (aprobar / rechazar / spam)
+- [PENDING] Decidir storage de fotos de reseña (Cloudflare R2 / Bunny vs `storage/app/public`) — variable `REVIEWS_DISK`
+- [PENDING] Sección "Confía en nosotros" en home con reseñas globales aprobadas (cacheada)
 - [X] Tabla `orders` con todos los campos extendidos del §5 (recipient_*, source, cancellation_reason, shipping_cost_internal)
 - [X] `OrderService::createFromPayload($payload, $source)` como único punto de creación de órdenes
-- [ ] Endpoint `POST /api/orders` autenticado por API key (placeholder para bot WhatsApp post-MVP)
-- [ ] Configurar mapping Dropi↔Shopify según §8.1 (5 estados canónicos)
-- [ ] **Desmarcar** "Sincronizar órdenes pagadas automáticamente" en panel Dropi (todo es COD)
-- [x] Logger temporal de payloads completos de webhooks Shopify (`ShopifyWebhookController::handle()` logea topic + shopify_order_id en cada request)
-- [ ] Política de envío gratis embebido (§16) reflejada en la tabla `products` o configuración de catálogo
+- [PENDING] Endpoint `POST /api/orders` autenticado por API key (placeholder para bot WhatsApp post-MVP)
+- [PENDING] Configurar mapping Dropi↔Shopify según §8.1 (5 estados canónicos)
+- [X] **Desmarcar** "Sincronizar órdenes pagadas automáticamente" en panel Dropi (todo es COD)
+- [X] Logger temporal de payloads completos de webhooks Shopify (`ShopifyWebhookController::handle()` logea topic + shopify_order_id en cada request)
+- [PENDING] Política de envío gratis embebido (§16) reflejada en la tabla `products` o configuración de catálogo
 - [x] Módulo `Landing` con tabla `landings` (slug, blade_view, product_id, is_active) — §17
 - [x] Convención `resources/views/landings/{slug}.blade.php` ↔ `landings.blade_view`
 - [x] Catch-all dinámico `/{slug}` al final de `web.php` con regex `[a-z0-9-]+`
 - [x] Admin UI Inertia (`/admin/landings`) para toggle activo/inactivo
-- [ ] `view()->exists()` defensivo en `PublicLandingController` antes de renderizar
-- [ ] Reserved-slugs list validada en `LandingService::create/update` (login, register, admin, dashboard, api, profile, webhooks, storage, up)
-- [ ] Comando `php artisan landing:make {slug} --product={id}` cuando se cree la landing #3
+- [X] `view()->exists()` defensivo en `PublicLandingController` antes de renderizar
+- [X] Reserved-slugs list validada en `LandingService::create/update` (login, register, admin, dashboard, api, profile, webhooks, storage, up)
+- [X] Comando `php artisan landing:make {slug} --product={id}` cuando se cree la landing #3
 
 ---
 
