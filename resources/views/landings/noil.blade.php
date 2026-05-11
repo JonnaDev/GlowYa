@@ -310,5 +310,438 @@
             <a href="#comprar" class="btn-noil">Quiero probar NOIL <i class="fa-solid fa-arrow-right text-xs"></i></a>
         </div>
     </section>
+
+    {{-- DIFERENCIAS / FEATURES --}}
+    <section class="bg-noil relative py-24 px-6 overflow-hidden">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="eyebrow reveal"><span class="dot"></span>¿Por qué NOIL y no otro?</span>
+                <h2 class="reveal display mt-6 text-3xl sm:text-4xl font-extrabold tracking-tight">
+                    Fórmula premium para <span class="text-gradient">resultados reales</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="feature-card reveal">
+                    <div class="feature-icon"><i class="fa-solid fa-droplet"></i></div>
+                    <h3 class="text-lg font-bold text-white mb-2">Ácido Salicílico Suave</h3>
+                    <p class="text-sm text-white/60 leading-relaxed">Disuelve el sebo atrapado en los poros de la espalda y pecho sin resecar ni dañar la barrera cutánea.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 100ms;">
+                    <div class="feature-icon"><i class="fa-solid fa-water"></i></div>
+                    <h3 class="text-lg font-bold text-white mb-2">Minerales Marinos</h3>
+                    <p class="text-sm text-white/60 leading-relaxed">Equilibran el pH de la piel y reducen la inflamación activa. Ideales para la piel masculina más gruesa.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 200ms;">
+                    <div class="feature-icon"><i class="fa-solid fa-shield-virus"></i></div>
+                    <h3 class="text-lg font-bold text-white mb-2">Sin Sulfatos Agresivos</h3>
+                    <p class="text-sm text-white/60 leading-relaxed">No usamos detergentes fuertes que resecan. Limpiamos con tensioactivos suaves de alta calidad.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 300ms;">
+                    <div class="feature-icon"><i class="fa-solid fa-clock"></i></div>
+                    <h3 class="text-lg font-bold text-white mb-2">Fragancia 8H</h3>
+                    <p class="text-sm text-white/60 leading-relaxed">Tecnología de fragancia encapsulada. El olor masculino, fresco y elegante se libera lentamente todo el día.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- TESTIMONIOS --}}
+    <section class="relative py-24 px-6 overflow-hidden" style="background:rgba(56,189,248,0.03)">
+        <div class="absolute inset-0 grid-lab opacity-20 pointer-events-none"></div>
+        <div class="relative max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="eyebrow reveal"><span class="dot"></span>Prueba Social</span>
+                <h2 class="reveal display mt-6 text-3xl sm:text-4xl font-extrabold tracking-tight">
+                    Ellos ya cambiaron su <span class="text-gradient">rutina</span>
+                </h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass p-6 sm:p-8 rounded-3xl reveal">
+                    <div class="flex text-sky-400 mb-4 text-xs gap-1">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="text-white/80 leading-relaxed text-sm mb-6">
+                        "Siempre sufrí de granos en la espalda por hacer ejercicio. Probé jabones de farmacia carísimos y nada. NOIL no solo me los quitó en 2 semanas, sino que huelo cabrón todo el día. Recomendado al 100%."
+                    </p>
+                    <p class="text-sm font-bold text-white">— Mateo V. <span class="text-white/40 font-normal ml-1">· Medellín</span></p>
+                </div>
+                <div class="glass p-6 sm:p-8 rounded-3xl reveal" style="transition-delay: 100ms;">
+                    <div class="flex text-sky-400 mb-4 text-xs gap-1">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="text-white/80 leading-relaxed text-sm mb-6">
+                        "Mi novia fue la que me notó el cambio de olor. Pensó que había comprado un perfume nuevo. El efecto en la piel se siente desde la primera ducha, ya no me pica la espalda."
+                    </p>
+                    <p class="text-sm font-bold text-white">— Alejandro R. <span class="text-white/40 font-normal ml-1">· Bogotá</span></p>
+                </div>
+                <div class="glass p-6 sm:p-8 rounded-3xl reveal" style="transition-delay: 200ms;">
+                    <div class="flex text-sky-400 mb-4 text-xs gap-1">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="text-white/80 leading-relaxed text-sm mb-6">
+                        "Es otro nivel. El empaque se ve brutal en mi baño, la textura es increíble y de verdad rinde mucho. Solo necesitas un poco para que haga bastante espuma. Ya pedí 2 más."
+                    </p>
+                    <p class="text-sm font-bold text-white">— Carlos M. <span class="text-white/40 font-normal ml-1">· Cali</span></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- FAQ --}}
+    <section class="bg-noil relative py-24 px-6">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-14">
+                <span class="eyebrow reveal"><span class="dot"></span>Preguntas Frecuentes</span>
+                <h2 class="reveal display mt-6 text-3xl font-extrabold tracking-tight">
+                    ¿Tienes dudas? <span class="text-gradient">Aquí te las resolvemos</span>
+                </h2>
+            </div>
+            <div class="space-y-4">
+                <details class="faq-item glass rounded-2xl reveal">
+                    <summary class="flex items-center justify-between p-6 select-none">
+                        <h3 class="font-bold text-white pr-4">¿Sirve para todo tipo de piel?</h3>
+                        <div class="faq-icon text-sky-400 w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                    </summary>
+                    <div class="px-6 pb-6 text-sm text-white/60 leading-relaxed">
+                        Sí, está formulado especialmente para piel masculina, controlando el exceso de sebo, pero sus agentes limpiadores suaves y sin sulfatos agresivos lo hacen apto incluso para pieles sensibles.
+                    </div>
+                </details>
+                <details class="faq-item glass rounded-2xl reveal">
+                    <summary class="flex items-center justify-between p-6 select-none">
+                        <h3 class="font-bold text-white pr-4">¿En cuánto tiempo veo resultados en los granitos?</h3>
+                        <div class="faq-icon text-sky-400 w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                    </summary>
+                    <div class="px-6 pb-6 text-sm text-white/60 leading-relaxed">
+                        Con el uso diario constante, la mayoría de nuestros clientes notan una reducción significativa en la inflamación y aparición de granitos nuevos entre la primera y segunda semana.
+                    </div>
+                </details>
+                <details class="faq-item glass rounded-2xl reveal">
+                    <summary class="flex items-center justify-between p-6 select-none">
+                        <h3 class="font-bold text-white pr-4">¿A qué huele exactamente?</h3>
+                        <div class="faq-icon text-sky-400 w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                    </summary>
+                    <div class="px-6 pb-6 text-sm text-white/60 leading-relaxed">
+                        Tiene un perfil aromático fresco, maderoso y elegante. Combina notas marinas limpias con un fondo ligeramente intenso. Huele a perfume masculino premium recién aplicado, y la fragancia se encapsula para durar horas.
+                    </div>
+                </details>
+                <details class="faq-item glass rounded-2xl reveal">
+                    <summary class="flex items-center justify-between p-6 select-none">
+                        <h3 class="font-bold text-white pr-4">¿Cómo funciona el pago contra entrega?</h3>
+                        <div class="faq-icon text-sky-400 w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                    </summary>
+                    <div class="px-6 pb-6 text-sm text-white/60 leading-relaxed">
+                        Es muy fácil y seguro: llenas el formulario aquí en la página, nosotros te contactamos por WhatsApp para confirmar tus datos, enviamos el paquete, y tú le pagas en efectivo o transferencia al mensajero cuando te entregue el producto en las manos.
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    {{-- CTA URGENCIA --}}
+    <section class="relative py-16 px-6" style="background:rgba(2,132,199,0.1)">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10">
+            <div class="w-full md:w-1/2 reveal-scale">
+                <div class="vertical-card" style="aspect-ratio:4/5;max-width:320px;">
+                    <img src="{{ asset('images_landings/noil/noilbodywash-urgency.png') }}" alt="NOIL Body Wash Urgencia">
+                </div>
+            </div>
+            <div class="w-full md:w-1/2 text-center md:text-left reveal">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider mb-4 border border-rose-500/30">
+                    <i class="fa-solid fa-fire animate-pulse"></i> Alta demanda
+                </span>
+                <h2 class="display text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
+                    Últimas unidades del <span class="text-gradient">primer lote</span>
+                </h2>
+                <p class="text-white/60 leading-relaxed mb-8">
+                    NOIL se está agotando más rápido de lo esperado. Asegura el tuyo antes de que entremos en lista de espera y transforma tu rutina de ducha hoy mismo.
+                </p>
+                <a href="#comprar" class="btn-noil w-full sm:w-auto">
+                    Asegurar mi unidad ahora <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    {{-- FORMULARIO --}}
+    <section id="comprar" class="bg-noil relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 grid-lab opacity-25 pointer-events-none"></div>
+
+        <div class="relative max-w-xl mx-auto reveal">
+            <div class="glass-strong rounded-3xl p-6 sm:p-10 relative overflow-hidden">
+                <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-sky-400/15 blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-sky-300/10 blur-3xl pointer-events-none"></div>
+
+                <div class="relative">
+                    <div class="text-center mb-2">
+                        <span class="eyebrow"><span class="dot"></span> Empieza hoy</span>
+                    </div>
+                    <h2 class="display text-center text-3xl sm:text-4xl font-extrabold tracking-tight mt-4">
+                        Tu pedido en <span class="text-gradient">2 minutos</span>
+                    </h2>
+                    <p class="mt-2 text-center text-white/50 text-sm">
+                        Pago contra entrega. Te llamamos para confirmar antes de despachar.
+                    </p>
+
+                    @if(session('success'))
+                        <div class="mt-6 flex items-start gap-3 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-sm">
+                            <i class="fa-solid fa-circle-check mt-0.5"></i>
+                            <p>{{ session('success') }}</p>
+                        </div>
+                    @endif
+
+                    @if($errors->any())
+                        <div class="mt-6 flex items-start gap-3 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-sm">
+                            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                            <div class="space-y-0.5">
+                                @foreach($errors->all() as $error)
+                                    <p>{{ $error }}</p>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('landing.order', ['slug' => $landing->slug ?? 'noil']) }}" method="POST" class="mt-8 space-y-4">
+                        @csrf
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Nombre completo</label>
+                                <input name="full_name" type="text" required class="form-input"
+                                       value="{{ old('full_name') }}" placeholder="Carlos Rodríguez">
+                            </div>
+                            <div>
+                                <label class="form-label">Cédula</label>
+                                <input name="id_number" type="text" required class="form-input"
+                                       value="{{ old('id_number') }}" placeholder="1023456789">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Celular</label>
+                                <input name="phone" type="tel" required class="form-input"
+                                       value="{{ old('phone') }}" placeholder="3001234567">
+                            </div>
+                            <div>
+                                <label class="form-label">Email</label>
+                                <input name="email" type="email" required class="form-input"
+                                       value="{{ old('email') }}" placeholder="tu@email.com">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Departamento</label>
+                                <select name="department" required class="form-input">
+                                    <option value="">Selecciona…</option>
+                                    @foreach([
+                                        'Amazonas','Antioquia','Arauca','Atlántico','Bogotá D.C.',
+                                        'Bolívar','Boyacá','Caldas','Caquetá','Casanare','Cauca',
+                                        'Cesar','Chocó','Córdoba','Cundinamarca','Guainía','Guaviare',
+                                        'Huila','La Guajira','Magdalena','Meta','Nariño',
+                                        'Norte de Santander','Putumayo','Quindío','Risaralda',
+                                        'San Andrés y Providencia','Santander','Sucre','Tolima',
+                                        'Valle del Cauca','Vaupés','Vichada'
+                                    ] as $dept)
+                                        <option value="{{ $dept }}" {{ old('department') === $dept ? 'selected' : '' }}>{{ $dept }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Ciudad</label>
+                                <input name="city" type="text" required class="form-input"
+                                       value="{{ old('city') }}" placeholder="Bogotá">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Barrio (opcional)</label>
+                                <input name="neighborhood" type="text" class="form-input"
+                                       value="{{ old('neighborhood') }}" placeholder="Chapinero">
+                            </div>
+                            <div>
+                                <label class="form-label">Cantidad</label>
+                                <input name="quantity" type="number" min="1" max="5" required class="form-input"
+                                       value="{{ old('quantity', 1) }}">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label">Dirección</label>
+                            <input name="address" type="text" required class="form-input"
+                                   value="{{ old('address') }}" placeholder="Cra 7 # 32-15 apto 502">
+                        </div>
+
+                        <div>
+                            <label class="form-label">Notas para el courier (opcional)</label>
+                            <textarea name="notes" rows="2" class="form-input"
+                                      placeholder="Dejar en portería, rejas blancas…">{{ old('notes') }}</textarea>
+                        </div>
+
+                        {{-- Resumen de precio --}}
+                        <div class="mt-4 rounded-2xl border border-sky-400/20 bg-sky-900/10 p-5 backdrop-blur-md">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-white/60">Precio por unidad</span>
+                                <span class="font-semibold text-white">
+                                    $<span data-price-unit-display>{{ isset($product) ? number_format((float) $product->price, 0, ',', '.') : '0' }}</span>
+                                    <span class="text-[11px] text-white/40 ml-0.5">COP</span>
+                                </span>
+                            </div>
+                            <div class="mt-1.5 flex items-center justify-between text-sm">
+                                <span class="text-white/60">Cantidad</span>
+                                <span class="font-semibold text-white" data-qty-display>{{ (int) old('quantity', 1) }}</span>
+                            </div>
+
+                            <div class="my-3 h-px bg-gradient-to-r from-transparent via-sky-400/30 to-transparent"></div>
+
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">Total a pagar</span>
+                                <span class="text-2xl font-black text-sky-400 transition-all" data-total-wrapper>
+                                    $<span data-total-display>{{ isset($product) ? number_format((float) $product->price * (int) old('quantity', 1), 0, ',', '.') : '0' }}</span>
+                                    <span class="text-xs text-sky-500/70 font-semibold ml-0.5">COP</span>
+                                </span>
+                            </div>
+                            <p class="mt-2 text-[10px] text-white/40 text-center">
+                                <i class="fa-solid fa-truck-fast text-sky-400/70 mr-1"></i>
+                                Envío incluido · Pagas al recibir
+                            </p>
+                        </div>
+
+                        <button type="submit" class="btn-noil w-full mt-6">
+                            Confirmar mi pedido
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+
+                        <p class="text-center text-[11px] text-white/30 mt-4">
+                            <i class="fa-solid fa-lock text-sky-400/50 mr-1"></i>
+                            Pago contra entrega · Tus datos están encriptados
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- FOOTER --}}
+    <footer class="bg-black py-10 px-6 text-center text-[11px] text-white/30 border-t border-sky-400/10">
+        <p class="text-sky-400 text-sm font-bold mb-2">NOIL <span class="text-white/50">Body Wash</span></p>
+        <p>© {{ date('Y') }} GlowYa · Todos los derechos reservados.</p>
+        <p class="mt-1 text-white/20">Desarrollado para la piel del hombre.</p>
+    </footer>
+
+    {{-- FLOATING CTA --}}
+    <a href="#comprar" class="floating-cta btn-noil" id="floatingCta" aria-label="Pedir NOIL Body Wash">
+        <i class="fa-solid fa-droplet"></i>
+        <span>Pedir ahora</span>
+    </a>
+
+    <script>
+    window.NOIL_PRICE_PER_UNIT = {{ isset($product) ? (float) $product->price : 0 }};
+    </script>
+    <script>
+    (() => {
+        document.addEventListener('DOMContentLoaded', () => {
+            const PRICE = Number(window.NOIL_PRICE_PER_UNIT) || 0;
+            const formatCOP = (n) => Math.round(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+
+            const qtyInput   = document.querySelector('input[name="quantity"]');
+            const qtyDisplay = document.querySelector('[data-qty-display]');
+            const totalEl    = document.querySelector('[data-total-display]');
+            const totalWrap  = document.querySelector('[data-total-wrapper]');
+
+            const updateTotal = () => {
+                const raw = parseInt(qtyInput?.value, 10);
+                const qty = Math.min(5, Math.max(1, Number.isFinite(raw) ? raw : 1));
+                if (qtyDisplay) qtyDisplay.textContent = String(qty);
+                if (totalEl)    totalEl.textContent    = formatCOP(qty * PRICE);
+                if (totalWrap) {
+                    totalWrap.classList.remove('scale-105');
+                    void totalWrap.offsetWidth;
+                    totalWrap.classList.add('scale-105');
+                    setTimeout(() => totalWrap.classList.remove('scale-105'), 180);
+                }
+            };
+
+            if (qtyInput) {
+                qtyInput.addEventListener('input', updateTotal);
+                qtyInput.addEventListener('change', updateTotal);
+                updateTotal();
+            }
+
+            // Reveal on scroll
+            const reveals = document.querySelectorAll('.reveal, .reveal-scale');
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('in');
+                        io.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+            reveals.forEach(r => io.observe(r));
+
+            // Counters
+            const counterIo = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (!e.isIntersecting) return;
+                    const el = e.target;
+                    const target = parseInt(el.dataset.target, 10);
+                    if (!Number.isFinite(target)) return;
+                    counterIo.unobserve(el);
+                    const duration = 1400;
+                    const start = performance.now();
+                    const tick = (now) => {
+                        const p = Math.min(1, (now - start) / duration);
+                        const eased = 1 - Math.pow(1 - p, 3);
+                        el.textContent = Math.round(target * eased).toLocaleString('es-CO');
+                        if (p < 1) requestAnimationFrame(tick);
+                    };
+                    requestAnimationFrame(tick);
+                });
+            }, { threshold: 0.4 });
+            document.querySelectorAll('[data-counter]').forEach(c => counterIo.observe(c));
+
+            // Floating CTA
+            const floatingCta = document.getElementById('floatingCta');
+            const heroSection = document.querySelector('.bg-noil');
+            const formSection = document.getElementById('comprar');
+            if (floatingCta && heroSection) {
+                const onScroll = () => {
+                    const scrolled = window.scrollY > heroSection.offsetHeight * 0.6;
+                    const formRect = formSection?.getBoundingClientRect();
+                    const overForm = formRect && formRect.top < window.innerHeight && formRect.bottom > 0;
+                    if (scrolled && !overForm) floatingCta.classList.add('visible');
+                    else floatingCta.classList.remove('visible');
+                };
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+            }
+            
+            // Smooth scroll
+            document.querySelectorAll('a[href^="#"]').forEach(a => {
+                a.addEventListener('click', e => {
+                    const id = a.getAttribute('href');
+                    if (id.length > 1) {
+                        const target = document.querySelector(id);
+                        if (target) {
+                            e.preventDefault();
+                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+                });
+            });
+        });
+    })();
+    </script>
 </body>
 </html>
