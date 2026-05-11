@@ -95,6 +95,7 @@ La tabla `orders` no es solo un snapshot — es el centro operativo del negocio.
 | `idempotency_key` | string UNIQUE | Generado en cliente o en controller antes de llamar Shopify |
 | `shopify_order_id` | string nullable indexed | Llega tras llamada exitosa a Shopify |
 | `dropi_order_id` | string nullable indexed | Si se logra extraer del payload |
+| `shopify_fulfillment_id` | string nullable | ID del fulfillment de Shopify — llega vía webhook `fulfillments/create` |
 | `source` | enum (`web_form`, `whatsapp_bot`, `admin_panel`) | KPI de canal de captura — todo canal externo entra siempre por `OrderService` |
 
 **Datos del destinatario (ya no caben en un único `address` libre)**
@@ -120,6 +121,8 @@ La tabla `orders` no es solo un snapshot — es el centro operativo del negocio.
 | `status_dropi` | string nullable | Estado canónico de Dropi (`ENTREGADO`, `RECHAZADO`, etc.) — fuente para KPI de tasa COD |
 | `last_synced_at` | timestamp nullable | Última vez que la conciliación nocturna validó esta orden |
 | `cancellation_reason` | enum nullable | `no_coverage`, `no_contact`, `customer_canceled`, `fraud_suspect`, `out_of_stock`, `cod_rejected`, `returned`, `other` — sin esto no hay análisis de pérdidas |
+| `tracking_number` | string nullable | Número de guía del courier — capturado por webhook `fulfillments/create` y `fulfillments/update` |
+| `tracking_url` | string nullable | URL de rastreo del courier — capturada junto con `tracking_number` |
 
 **Pago y costos**
 
@@ -218,7 +221,7 @@ Todos los Jobs que llamen a APIs externas implementan `tries = 5`, `backoff = [1
 
 - **Laravel NUNCA llama a Dropi directamente.** Dropi solo acepta integraciones autorizadas; Shopify ya es el partner autorizado. Mantener este flujo resuelve el problema de IPs.
 - **Shopify rate limits:** REST 40 req/s, GraphQL cost-based. Por eso todo va a colas.
-- **Webhooks de Shopify** hacia endpoints `/webhooks/shopify/*` con verificación de HMAC obligatoria. Eventos mínimos: `orders/updated`, `orders/fulfilled`, `orders/cancelled`, `products/update`, `inventory_levels/update`.
+- **Webhooks de Shopify** hacia un único endpoint `POST /api/webhooks/shopify` (registrado en `routes/api.php`, ruteado internamente por header `X-Shopify-Topic`). Verificación HMAC-SHA256 obligatoria vía middleware `VerifyShopifyWebhook`. Webhooks activos en producción: `orders/cancelled`, `orders/updated`, `fulfillments/create`, `fulfillments/update`.
 - **Modelo de pago:** 100% COD/recaudo en validación. Sin pasarela online, sin PSE, sin tarjeta. El cliente paga al courier al recibir. El form se envía al controller, controller crea orden local, encola job de envío a Shopify, redirige a página de confirmación.
 - **Conciliación nocturna:** comando artisan `orders:reconcile` que compara estado local vs Shopify y marca inconsistencias para revisión manual.
 
@@ -278,7 +281,7 @@ Dropi expone ~60 estados (incluye duplicados de courier). Solo mapeamos los **ca
 - **`financial_status` no se setea desde Laravel** — se deja en el default de Shopify (`pending`), porque refleja la realidad: el cliente todavía no pagó (lo hará al courier).
 - **Checkbox "Sincronizar órdenes pagadas automáticamente" en Dropi: DESMARCADO.** Como no habrá nunca un `financial_status='paid'` real (es todo COD), si quedara marcado Dropi no recogería ninguna orden. Desmarcarlo permite que Dropi se traiga todas las órdenes nuevas y caigan en `PENDIENTE_CONFIRMACION` para confirmación manual.
 
-**Regla de adopción de canales externos:** cualquier integración futura de captura (bot WhatsApp, call center, marketplace) **debe poder apuntar a `POST /api/orders` de Glofit**. Si un proveedor solo permite push directo a Dropi y no a webhook propio, se descarta como integración por la pérdida de propiedad de cliente.
+**Regla de adopción de canales externos:** cualquier integración futura de captura (bot WhatsApp, call center, marketplace) **debe poder apuntar a `POST /api/orders` de GlowYa**. Si un proveedor solo permite push directo a Dropi y no a webhook propio, se descarta como integración por la pérdida de propiedad de cliente.
 
 ---
 
@@ -316,7 +319,7 @@ No invertir tiempo en Reverb hasta migrar a VPS.
 
 ### Variables de entorno
 
-`.env` nunca en git. Configurar manualmente la primera vez en el hosting. Mínimo requerido: `APP_KEY`, `DB_*`, `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_WEBHOOK_SECRET`, `SHOPIFY_STORE`, `SENTRY_LARAVEL_DSN`.
+`.env` nunca en git. Configurar manualmente la primera vez en el hosting. Mínimo requerido: `APP_KEY`, `DB_*`, `SHOPIFY_STORE`, `SHOPIFY_API_VERSION`, `SHOPIFY_ACCESS_TOKEN`, `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_WEBHOOK_SECRET`, `SENTRY_LARAVEL_DSN`. Las credenciales Shopify cambian según entorno: local apunta a la dev store (Glofit CO — `glofit-shop.myshopify.com`), producción apunta a la tienda real (`glowya-8.myshopify.com`).
 
 ### Caché de Laravel
 
@@ -371,7 +374,7 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 - [X] Implementar tabla `orders` con `idempotency_key`
 - [X] Implementar `SendOrderToShopifyJob` con reintentos
 - [ ] Configurar crontab con `schedule:run` + `queue:work --stop-when-empty`
-- [ ] Implementar verificación HMAC de webhooks Shopify
+- [x] Implementar verificación HMAC de webhooks Shopify (`VerifyShopifyWebhook` middleware — HMAC-SHA256 con `SHOPIFY_WEBHOOK_SECRET`)
 - [ ] Implementar comando `orders:reconcile`
 - [ ] SEO base: sitemap, meta tags dinámicos, JSON-LD
 - [ ] Definir estructura de URLs (subdominio vs subcarpeta) — **antes de publicar**
@@ -386,7 +389,7 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 - [ ] Endpoint `POST /api/orders` autenticado por API key (placeholder para bot WhatsApp post-MVP)
 - [ ] Configurar mapping Dropi↔Shopify según §8.1 (5 estados canónicos)
 - [ ] **Desmarcar** "Sincronizar órdenes pagadas automáticamente" en panel Dropi (todo es COD)
-- [ ] Logger temporal de payloads completos de webhooks Shopify durante primeros 5-10 pedidos reales
+- [x] Logger temporal de payloads completos de webhooks Shopify (`ShopifyWebhookController::handle()` logea topic + shopify_order_id en cada request)
 - [ ] Política de envío gratis embebido (§16) reflejada en la tabla `products` o configuración de catálogo
 - [x] Módulo `Landing` con tabla `landings` (slug, blade_view, product_id, is_active) — §17
 - [x] Convención `resources/views/landings/{slug}.blade.php` ↔ `landings.blade_view`
@@ -510,17 +513,80 @@ Cacheable 10-15 min en driver `cache` (database) para no pegarle al MySQL en cad
 
 ---
 
-## 15. Setup de Shopify Partners y conexión inicial
+## 15. Setup de Shopify Partners y conexión — COMPLETADO
 
-Pendiente de documentar cuando se cierre el setup completo (instalación de app custom, generación de `ACCESS_TOKEN`, configuración de Cloudflare Tunnel para webhooks en dev local, registro de webhooks vía API). Por ahora, decisiones cerradas:
+### Tiendas y entornos
 
-- **Scopes mínimos:** `read_fulfillments,read_inventory,read_orders,write_orders,read_products`. Sin `write_products` (Shopify es source-of-truth del catálogo, Laravel solo lee).
+| Entorno | Tienda | Dominio Shopify | Notas |
+|---|---|---|---|
+| **Producción** | GlowYa | `glowya-8.myshopify.com` | Tienda real con Dropi conectado + webhooks activos hacia `glowya.com.co` |
+| **Desarrollo** | Glofit CO (Dev Store) | `glofit-shop.myshopify.com` | Dev store para pruebas locales. Mismo flujo, distinta app y tokens |
+
+Cada entorno tiene su propia app custom instalada con tokens independientes. El `.env` local apunta a la dev store; el `.env` en Hostinger apunta a la tienda real. Las credenciales **nunca se mezclan** — el switch se hace cambiando las 6 variables `SHOPIFY_*` en `.env`.
+
+### App custom y OAuth
+
+- La app **GlowYa** (producción) se creó en Shopify Partners y se instaló en `glowya-8.myshopify.com`.
+- El `ACCESS_TOKEN` se obtuvo mediante una ruta OAuth temporal en `routes/web.php` durante la instalación (endpoint de redirect que captura el token y lo muestra). Esa ruta se eliminó post-instalación.
+- **Scopes concedidos:** `read_fulfillments`, `read_inventory`, `read_orders`, `write_orders`, `read_products`. Sin `write_products` (Shopify es source-of-truth del catálogo, Laravel solo lee/only-read).
 - **API version:** `2026-04`.
-- **Flujo de instalación heredado:** desactivado (usar OAuth moderno).
-- **URL de callback en dev:** Cloudflare Tunnel apuntando a `php artisan serve`. URL cambia por reinicio del túnel — actualizar en Dev Dashboard cada vez.
 - **Dev store:** configurado con país Colombia (no US) para que Dropi funcione correctamente en moneda, dirección y validación de envío.
 
----
+### Variables de entorno (`.env`)
+
+```
+SHOPIFY_STORE=glowya-8.myshopify.com       # (o glofit-shop.myshopify.com en dev)
+SHOPIFY_API_VERSION=2026-04
+SHOPIFY_ACCESS_TOKEN=shpat_xxxxx            # Token de la app instalada
+SHOPIFY_API_KEY=xxxxx                       # Client ID de la app
+SHOPIFY_API_SECRET=shpss_xxxxx              # Client Secret de la app
+SHOPIFY_WEBHOOK_SECRET=xxxxx                # Clave de firma de webhooks (Settings → Webhooks)
+```
+
+Todas mapeadas en `config/services.php` → `services.shopify.*`.
+
+### Webhooks — configuración y verificación
+
+Los webhooks se registraron **manualmente desde Shopify Admin → Settings → Notifications → Webhooks** (no vía API programática). Todos apuntan al mismo endpoint y envían JSON:
+
+| Evento en Shopify | Topic (`X-Shopify-Topic`) | Handler en `ShopifyWebhookController` | Acción en `orders` |
+|---|---|---|---|
+| Cancelación de pedido | `orders/cancelled` | `handleCancelled()` | `status_local` → `cancelled` + `cancellation_reason` |
+| Creación de preparación de pedido | `fulfillments/create` | `handleFulfillmentCreated()` | `status_local` → `fulfilled` + captura `tracking_number`, `tracking_url`, `shopify_fulfillment_id` |
+| Actualización de pedido | `orders/updated` | `handleUpdated()` | Sincroniza `status_shopify` sin pisar `status_local` |
+| Actualización de preparación de pedido | `fulfillments/update` | `handleFulfillmentUpdated()` | Actualiza tracking + marca `fulfilled` si `status = success` |
+
+**Endpoint:** `POST https://glowya.com.co/api/webhooks/shopify`
+**Ruta:** `routes/api.php` → `ShopifyWebhookController::handle()`
+**Middleware:** `VerifyShopifyWebhook` — valida HMAC-SHA256 con `SHOPIFY_WEBHOOK_SECRET` (la clave de firma visible al pie de la sección Webhooks en Shopify admin).
+**Routing interno:** el controller lee `X-Shopify-Topic` del header y rutea con `match` expression al handler correspondiente. Topics no reconocidos responden `200 OK` con `{"ignored": true}`.
+
+> **Nota sobre `orders/fulfilled`:** el controller también maneja este topic como fallback, pero el evento principal para marcar fulfillment es `fulfillments/create` (disparado directamente por Dropi). `orders/fulfilled` rara vez llega como topic separado en este flujo.
+
+> **Webhooks solo funcionan en producción** con URL pública (`glowya.com.co`). En desarrollo local no se reciben webhooks de Shopify — las pruebas de flujo completo se hacen directamente en producción contra la tienda GlowYa.
+
+### Flujo Dropi → Shopify → Laravel (webhooks)
+
+```
+Dropi marca orden como ENTREGADO
+    → Shopify recibe fulfillment
+    → Shopify dispara webhook fulfillments/create
+    → POST /api/webhooks/shopify (HMAC verificado por middleware)
+    → ShopifyWebhookController::handleFulfillmentCreated()
+    → orders.status_local = 'fulfilled'
+    → orders.tracking_number + tracking_url capturados
+```
+
+### Archivos clave del sistema de webhooks
+
+| Archivo | Rol |
+|---|---|
+| `routes/api.php` | Registro de ruta `POST /webhooks/shopify` con middleware HMAC |
+| `Modules/Shopify/Http/Middleware/VerifyShopifyWebhook.php` | Verificación HMAC-SHA256 — prioriza `SHOPIFY_WEBHOOK_SECRET`, fallback a `SHOPIFY_API_SECRET` |
+| `Modules/Shopify/Http/Controllers/ShopifyWebhookController.php` | Router + handlers por topic (5 topics: fulfilled, fulfillments/create, fulfillments/update, cancelled, updated) |
+| `Modules/Orders/Database/Migrations/2026_05_10_200000_add_tracking_to_orders_table.php` | Migración que agrega `shopify_fulfillment_id`, `tracking_number`, `tracking_url` a `orders` |
+| `config/services.php` | Mapeo de variables `.env` → `config('services.shopify.*')` |
+
 
 ## 16. Política de envío y precios
 
@@ -662,5 +728,5 @@ Endpoints adicionales en `Modules/Landing/Http/Controllers/Admin/LandingControll
 
 ---
 
-**Última revisión:** mayo 2026  
+**Última revisión:** 11 mayo 2026 — §15 completado (webhooks + OAuth + dual-env documentados)  
 **Stack confirmado:** Laravel 12 + Inertia.js + React + TypeScript + Tailwind + MySQL + Hostinger Premium
