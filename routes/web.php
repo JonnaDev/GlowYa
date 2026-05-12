@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Landing\Models\Landing;
 use App\Http\Controllers\ProfileController;
 use App\Modules\Catalog\Http\Controllers\ImportController;
 use App\Modules\Landing\Http\Controllers\Admin\LandingController as AdminLandingController;
@@ -11,11 +12,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    $activeLandings = Landing::where('is_active', true)->get();
+    return view('welcome', compact('activeLandings'));
 });
 
 Route::get('/dashboard', function () {

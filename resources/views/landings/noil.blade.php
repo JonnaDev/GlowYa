@@ -239,7 +239,7 @@
 
         <div class="reveal-scale max-w-lg mx-auto">
             <div class="vertical-card">
-                <img src="{{ asset('images_landings/noil/noilbodywash-pain.png') }}" alt="Piel con granitos e irritación — problema que NOIL resuelve">
+                <img src="{{ asset('images_landings/noil/noilbodywash-pain.webp') }}" alt="Piel con granitos e irritación — problema que NOIL resuelve">
             </div>
             <ul class="mt-10 space-y-3 max-w-md mx-auto text-white/80">
                 <span class="vc-tag vc-tag-pain"><i class="fa-solid fa-heart-crack text-[9px]"></i> El dolor invisible</span>
@@ -281,7 +281,7 @@
 
         <div class="reveal-scale max-w-lg mx-auto">
             <div class="vertical-card">
-                <img src="{{ asset('images_landings/noil/noilbodywash-solution.png') }}" alt="Piel limpia y sin granitos con NOIL Body Wash">
+                <img src="{{ asset('images_landings/noil/noilbodywash-solution.webp') }}" alt="Piel limpia y sin granitos con NOIL Body Wash">
             </div>
             <ul class="mt-10 space-y-3 max-w-md mx-auto text-white/80">
                 <span class="vc-tag vc-tag-solution"><i class="fa-solid fa-sparkles text-[9px]"></i> El cuerpo que proyectas</span>
@@ -451,7 +451,7 @@
         <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10">
             <div class="w-full md:w-1/2 reveal-scale">
                 <div class="vertical-card" style="aspect-ratio:4/5;max-width:320px;">
-                    <img src="{{ asset('images_landings/noil/noilbodywash-urgency.png') }}" alt="NOIL Body Wash Urgencia">
+                    <img src="{{ asset('images_landings/noil/noilbodywash-urgency.webp') }}" alt="NOIL Body Wash Urgencia">
                 </div>
             </div>
             <div class="w-full md:w-1/2 text-center md:text-left reveal">
