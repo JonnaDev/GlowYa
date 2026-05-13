@@ -31,18 +31,25 @@ type SidebarSection = {
 
 const sections: SidebarSection[] = [
     {
-        title: 'Catálogo',
+        title: 'Shopify',
         links: [
             { label: 'Importación Shopify', href: '/catalog/import', routeName: 'catalog.import', icon: Download },
             { label: 'Categorías', href: '/catalog/categories', routeName: 'catalog.categories', icon: Tag },
+            { label: 'Productos importados', href: '/products', routeName: 'products.index', icon: Package },
         ],
     },
+
     {
-        title: 'Admin',
+        title: 'Landings',
         links: [
-            { label: 'Landings', href: '/admin/landings', routeName: 'admin.landings.index', icon: Globe },
+            { label: 'Landings', href: '/admin/landings', routeName: 'admin.landings.index', icon: Globe },     
+        ],
+    },
+
+    {
+        title: 'Ordenes',
+        links: [
             { label: 'Órdenes generadas', href: '/orders', routeName: 'orders.index', icon: ShoppingCart },
-            { label: 'Productos importados', href: '/products', routeName: 'products.index', icon: Package },
             { label: 'Ventas totales', href: '/sales', routeName: 'sales.index', icon: DollarSign },
             { label: 'Analítica', href: '/analytics', routeName: 'analytics.index', icon: BarChart3 },
         ],
