@@ -7,11 +7,33 @@
     <meta name="description" content="Aclara manchas oscuras, melasma y paño en piel facial con Dr Melaxin TX. Fórmula con activos clínicamente probados. Resultados visibles desde la 4ª semana.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="Dr Melaxin TX Cream — Tratamiento despigmentante con respaldo dermatológico">
+    <meta property="og:description" content="Aclara manchas oscuras, melasma y paño en piel facial con Dr Melaxin TX. Fórmula con activos clínicamente probados. Resultados visibles desde la 4ª semana.">
+    <meta property="og:image" content="{{ asset('images_landings/dr-melaxin/drmelaxin-solution.webp') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url()->current() }}">
+    <meta property="twitter:title" content="Dr Melaxin TX Cream — Tratamiento despigmentante con respaldo dermatológico">
+    <meta property="twitter:description" content="Aclara manchas oscuras, melasma y paño en piel facial con Dr Melaxin TX. Fórmula con activos clínicamente probados. Resultados visibles desde la 4ª semana.">
+    <meta property="twitter:image" content="{{ asset('images_landings/dr-melaxin/drmelaxin-solution.webp') }}">
+
+    <link rel="canonical" href="{{ url()->current() }}">
+
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    @vite(['resources/css/app.css'])
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
 
     <style>
         :root {
@@ -576,7 +598,7 @@
 
         <div class="reveal-scale max-w-lg mx-auto">
             <div class="vertical-card">
-                <img src="{{ asset('images_landings/dr-melaxin/drmelaxin-pain.png') }}" alt="Mujer mirándose al espejo con manchas en el rostro">
+                <img src="{{ asset('images_landings/dr-melaxin/drmelaxin-pain.webp') }}" alt="Mujer mirándose al espejo con manchas en el rostro" width="440" height="782" loading="lazy" class="w-full h-full object-cover block">
             </div>
 
             {{-- Pain bullet list --}}
@@ -631,7 +653,7 @@
 
         <div class="reveal-scale max-w-lg mx-auto">
             <div class="vertical-card">
-                <img src="{{ asset('images_landings/dr-melaxin/drmelaxin-solution.jpg') }}" alt="Mujer con piel uniforme tras tratamiento despigmentante">
+                <img src="{{ asset('images_landings/dr-melaxin/drmelaxin-solution.webp') }}" alt="Mujer con piel uniforme tras tratamiento despigmentante" width="440" height="782" loading="lazy" class="w-full h-full object-cover block">
             </div>
 
             {{-- Solution bullet list --}}
@@ -843,10 +865,10 @@
             {{-- Stage --}}
             <div class="scroll-video-stage">
                 <video id="heroVideo"
-                       src="{{ asset('images_landings/dr-melaxin/drmelaxin-scroll.mp4') }}"
+                       src="{{ asset('images_landings/dr-melaxin/drmelaxin_scrolling.mp4') }}"
                        muted
                        playsinline
-                       preload="auto"
+                       preload="metadata"
                        disablepictureinpicture></video>
 
                 <div class="scroll-video-overlay">
@@ -1165,13 +1187,22 @@
             const heroSection = document.querySelector('.bg-lab-strong');
             const formSection = document.getElementById('comprar');
             if (floatingCta && heroSection) {
+                let overForm = false;
+
                 const onScroll = () => {
                     const scrolled = window.scrollY > heroSection.offsetHeight * 0.6;
-                    const formRect = formSection?.getBoundingClientRect();
-                    const overForm = formRect && formRect.top < window.innerHeight && formRect.bottom > 0;
                     if (scrolled && !overForm) floatingCta.classList.add('visible');
                     else floatingCta.classList.remove('visible');
                 };
+
+                if (formSection) {
+                    const formObserver = new IntersectionObserver((entries) => {
+                        overForm = entries[0].isIntersecting;
+                        onScroll();
+                    }, { threshold: 0 });
+                    formObserver.observe(formSection);
+                }
+
                 window.addEventListener('scroll', onScroll, { passive: true });
                 onScroll();
             }
@@ -1217,8 +1248,15 @@
                     };
 
                     let ticking = false;
+                    let isVisible = false;
+
+                    const obs = new IntersectionObserver((entries) => {
+                        isVisible = entries[0].isIntersecting;
+                    }, { threshold: 0.01 });
+                    obs.observe(scrollHero);
+
                     window.addEventListener('scroll', () => {
-                        if (!ticking) {
+                        if (isVisible && !ticking) {
                             requestAnimationFrame(() => { updateVideo(); ticking = false; });
                             ticking = true;
                         }

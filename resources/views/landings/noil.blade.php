@@ -6,11 +6,34 @@
     <title>NOIL Body Wash — El gel que limpia profundo y huele a perfume todo el día</title>
     <meta name="description" content="NOIL Starry Say: ácido salicílico suave, minerales marinos y fragancia encapsulada. Sin sulfatos agresivos. Limpieza profunda para piel masculina. Entrega a todo Colombia.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="NOIL Body Wash — El gel que limpia profundo y huele a perfume todo el día">
+    <meta property="og:description" content="NOIL Starry Say: ácido salicílico suave, minerales marinos y fragancia encapsulada. Sin sulfatos agresivos. Limpieza profunda para piel masculina. Entrega a todo Colombia.">
+    <meta property="og:image" content="{{ asset('images_landings/noil/noilbodywash-solution.webp') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url()->current() }}">
+    <meta property="twitter:title" content="NOIL Body Wash — El gel que limpia profundo y huele a perfume todo el día">
+    <meta property="twitter:description" content="NOIL Starry Say: ácido salicílico suave, minerales marinos y fragancia encapsulada. Sin sulfatos agresivos. Limpieza profunda para piel masculina. Entrega a todo Colombia.">
+    <meta property="twitter:image" content="{{ asset('images_landings/noil/noilbodywash-solution.webp') }}">
+
+    <link rel="canonical" href="{{ url()->current() }}">
+
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    @vite(['resources/css/app.css'])
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
     <style>
         :root {
             --noil-blue: #38bdf8;
@@ -239,7 +262,7 @@
 
         <div class="reveal-scale max-w-lg mx-auto">
             <div class="vertical-card">
-                <img src="{{ asset('images_landings/noil/noilbodywash-pain.webp') }}" alt="Piel con granitos e irritación — problema que NOIL resuelve">
+                <img src="{{ asset('images_landings/noil/noilbodywash-pain.webp') }}" alt="Piel con granitos e irritación — problema que NOIL resuelve" width="420" height="747" loading="lazy" class="w-full h-full object-cover block">
             </div>
             <ul class="mt-10 space-y-3 max-w-md mx-auto text-white/80">
                 <span class="vc-tag vc-tag-pain"><i class="fa-solid fa-heart-crack text-[9px]"></i> El dolor invisible</span>
@@ -281,7 +304,7 @@
 
         <div class="reveal-scale max-w-lg mx-auto">
             <div class="vertical-card">
-                <img src="{{ asset('images_landings/noil/noilbodywash-solution.webp') }}" alt="Piel limpia y sin granitos con NOIL Body Wash">
+                <img src="{{ asset('images_landings/noil/noilbodywash-solution.webp') }}" alt="Piel limpia y sin granitos con NOIL Body Wash" width="420" height="747" loading="lazy" class="w-full h-full object-cover block">
             </div>
             <ul class="mt-10 space-y-3 max-w-md mx-auto text-white/80">
                 <span class="vc-tag vc-tag-solution"><i class="fa-solid fa-sparkles text-[9px]"></i> El cuerpo que proyectas</span>
@@ -451,7 +474,7 @@
         <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10">
             <div class="w-full md:w-1/2 reveal-scale">
                 <div class="vertical-card" style="aspect-ratio:4/5;max-width:320px;">
-                    <img src="{{ asset('images_landings/noil/noilbodywash-urgency.webp') }}" alt="NOIL Body Wash Urgencia">
+                    <img src="{{ asset('images_landings/noil/noilbodywash-urgency.webp') }}" alt="NOIL Body Wash Urgencia" width="320" height="400" loading="lazy" class="w-full h-full object-cover block">
                 </div>
             </div>
             <div class="w-full md:w-1/2 text-center md:text-left reveal">
@@ -716,13 +739,22 @@
             const heroSection = document.querySelector('.bg-noil');
             const formSection = document.getElementById('comprar');
             if (floatingCta && heroSection) {
+                let overForm = false;
+                
                 const onScroll = () => {
                     const scrolled = window.scrollY > heroSection.offsetHeight * 0.6;
-                    const formRect = formSection?.getBoundingClientRect();
-                    const overForm = formRect && formRect.top < window.innerHeight && formRect.bottom > 0;
                     if (scrolled && !overForm) floatingCta.classList.add('visible');
                     else floatingCta.classList.remove('visible');
                 };
+
+                if (formSection) {
+                    const formObserver = new IntersectionObserver((entries) => {
+                        overForm = entries[0].isIntersecting;
+                        onScroll();
+                    }, { threshold: 0 });
+                    formObserver.observe(formSection);
+                }
+
                 window.addEventListener('scroll', onScroll, { passive: true });
                 onScroll();
             }
