@@ -55,6 +55,7 @@ require __DIR__.'/auth.php';
 // Se declaran al final para no pisar rutas anteriores.
 Route::post('/{slug}/order', [PublicOrderController::class, 'store'])
     ->where('slug', '[a-z0-9-]+')
+    ->middleware('throttle:5,1')
     ->name('landing.order');
 
 Route::get('/{slug}', [PublicLandingController::class, 'show'])

@@ -33,7 +33,8 @@ class SendOrderToShopifyJob implements ShouldQueue
     {
         $this->order->refresh()->loadMissing('items');
 
-        if ($this->order->shopify_order_id !== null) {
+        // Ya enviada, o cancelada localmente (p. ej. spam) mientras esperaba en cola.
+        if ($this->order->shopify_order_id !== null || $this->order->status_local === 'cancelled') {
             return;
         }
 

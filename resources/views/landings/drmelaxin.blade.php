@@ -948,6 +948,13 @@
                     <form action="{{ route('landing.order', ['slug' => $landing->slug]) }}" method="POST" class="mt-8 space-y-4">
                         @csrf
 
+                        {{-- Honeypot anti-bots: invisible para personas. Si se renombra, actualizar PublicOrderController. --}}
+                        <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                            <label>No llenar este campo
+                                <input type="text" name="extra_reference" value="" tabindex="-1" autocomplete="off">
+                            </label>
+                        </div>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="form-label-lab">Nombre completo</label>
@@ -979,15 +986,7 @@
                                 <label class="form-label-lab">Departamento</label>
                                 <select name="department" required class="form-input-lab">
                                     <option value="">Selecciona…</option>
-                                    @foreach([
-                                        'Amazonas','Antioquia','Arauca','Atlántico','Bogotá D.C.',
-                                        'Bolívar','Boyacá','Caldas','Caquetá','Casanare','Cauca',
-                                        'Cesar','Chocó','Córdoba','Cundinamarca','Guainía','Guaviare',
-                                        'Huila','La Guajira','Magdalena','Meta','Nariño',
-                                        'Norte de Santander','Putumayo','Quindío','Risaralda',
-                                        'San Andrés y Providencia','Santander','Sucre','Tolima',
-                                        'Valle del Cauca','Vaupés','Vichada'
-                                    ] as $dept)
+                                    @foreach(\App\Modules\Orders\Support\ColombiaDepartments::LIST as $dept)
                                         <option value="{{ $dept }}" {{ old('department') === $dept ? 'selected' : '' }}>{{ $dept }}</option>
                                     @endforeach
                                 </select>
