@@ -8,6 +8,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Orders\Jobs\SendOrderToShopifyJob;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Orders\Models\OrderItem;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -44,7 +45,25 @@ class OrderService
             fn (array $i): float => (float) $i['unit_price'] * (int) $i['quantity']
         );
 
-        $order = DB::transaction(function () use ($payload, $source, $idempotencyKey, $items, $totalAmount): Order {
+        try {
+            $order = $this->persist($payload, $source, $idempotencyKey, $items, $totalAmount);
+        } catch (UniqueConstraintViolationException) {
+            // Dos peticiones con la misma clave llegaron a la vez (doble clic):
+            // la otra ganó la carrera y ya creó la orden y encoló su envío.
+            return Order::where('idempotency_key', $idempotencyKey)->firstOrFail();
+        }
+
+        SendOrderToShopifyJob::dispatch($order)->afterCommit();
+
+        return $order->fresh('items');
+    }
+
+    /**
+     * @param  array<int,array{product_id:int,shopify_variant_id:string,title:string,sku:?string,quantity:int,unit_price:float}>  $items
+     */
+    private function persist(array $payload, string $source, string $idempotencyKey, array $items, float $totalAmount): Order
+    {
+        return DB::transaction(function () use ($payload, $source, $idempotencyKey, $items, $totalAmount): Order {
             $order = Order::create([
                 'idempotency_key' => $idempotencyKey,
                 'source' => $source,
@@ -75,10 +94,6 @@ class OrderService
 
             return $order;
         });
-
-        SendOrderToShopifyJob::dispatch($order)->afterCommit();
-
-        return $order->fresh('items');
     }
 
     /**

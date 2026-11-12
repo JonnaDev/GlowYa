@@ -79,6 +79,66 @@ class PublicOrderTest extends TestCase
         $this->assertSame('1029880299', $order->recipient_id_number);
     }
 
+    #[DataProvider('realLandings')]
+    public function test_real_landing_renders_form_protections(string $slug): void
+    {
+        $this->withoutVite();
+
+        Landing::create([
+            'slug' => $slug,
+            'title' => "Landing {$slug}",
+            'blade_view' => "landings.{$slug}",
+            'product_id' => Product::firstOrFail()->id,
+            'is_active' => true,
+        ]);
+
+        $response = $this->get("/{$slug}")->assertOk();
+
+        $response->assertSee('name="extra_reference"', false);
+        $this->assertMatchesRegularExpression(
+            '/name="idempotency_key" value="[0-9a-f-]{36}"/',
+            $response->getContent(),
+        );
+    }
+
+    /** @return array<string,array{0:string}> */
+    public static function realLandings(): array
+    {
+        return [
+            'noil' => ['noil'],
+            'drmelaxin' => ['drmelaxin'],
+        ];
+    }
+
+    public function test_same_form_submitted_twice_creates_a_single_order(): void
+    {
+        $payload = $this->validPayload([
+            'idempotency_key' => '0b1f6f0e-6c0a-4d53-9a3e-0d6b7f7d2a11',
+        ]);
+
+        $this->post('/demo/order', $payload)->assertSessionHasNoErrors();
+        $this->post('/demo/order', $payload)
+            ->assertRedirect('/demo')
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        $this->assertSame(1, Order::count());
+        Queue::assertPushed(SendOrderToShopifyJob::class, 1);
+    }
+
+    public function test_different_idempotency_keys_create_separate_orders(): void
+    {
+        $this->post('/demo/order', $this->validPayload([
+            'idempotency_key' => '0b1f6f0e-6c0a-4d53-9a3e-0d6b7f7d2a11',
+        ]));
+        $this->post('/demo/order', $this->validPayload([
+            'idempotency_key' => '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+        ]));
+
+        $this->assertSame(2, Order::count());
+        Queue::assertPushed(SendOrderToShopifyJob::class, 2);
+    }
+
     /**
      * Datos reales del pedido #5 de producción (bot de julio 2026).
      */
@@ -125,6 +185,7 @@ class PublicOrderTest extends TestCase
             'nombre con números' => ['full_name', 'Cliente 123'],
             'nombre con url' => ['full_name', 'http://spam.example'],
             'cantidad excesiva' => ['quantity', 6],
+            'clave de idempotencia inválida' => ['idempotency_key', 'no-es-un-uuid'],
         ];
     }
 
