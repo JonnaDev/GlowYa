@@ -167,15 +167,28 @@ La tabla `orders` no es solo un snapshot — es el centro operativo del negocio.
 
 ### Estrategia: cron + `--stop-when-empty`
 
-Crontab del hosting:
+Crons activos en hPanel (Avanzado → Cron Jobs), ambos cada minuto (`* * * * *`):
 
 ```cron
 # Scheduler de Laravel
-* * * * * cd /home/USER/htdocs/app && php artisan schedule:run >> /dev/null 2>&1
+/usr/bin/php /home/u352117811/domains/glowya.com.co/public_html/artisan schedule:run >> /dev/null 2>&1
 
 # Worker de colas (corre cada minuto, sale cuando vacía)
-* * * * * cd /home/USER/htdocs/app && php artisan queue:work --stop-when-empty --max-time=55 --tries=3 --backoff=10 >> /dev/null 2>&1
+/usr/bin/php /home/u352117811/domains/glowya.com.co/public_html/artisan queue:work --stop-when-empty --max-time=55 --tries=3 --backoff=10 >> /dev/null 2>&1
 ```
+
+- **La cola se despacha con el segundo cron**, no desde el scheduler. No duplicar esa tarea en `routes/console.php`.
+- **`schedule:run` hoy no ejecuta nada**: `routes/console.php` no tiene tareas programadas. Queda listo para cuando se agreguen (stock automático, `orders:reconcile`, sitemap).
+- **`--tries=3 --backoff=10` no aplican a `SendOrderToShopifyJob`**: mandan los valores del propio job (`tries = 5`, `backoff = [10, 30, 60, 300, 900]`).
+
+**Cómo verificar en producción (SSH):**
+
+```bash
+php artisan queue:failed    # envíos que agotaron reintentos, con su fecha de fallo
+php artisan queue:retry ID  # reenviar uno concreto
+```
+
+Si un pedido queda en "Pendiente" más de unos minutos: revisar `queue:failed` (Shopify rechazó el envío) y que los dos crons sigan activos en hPanel.
 
 ### Qué va a colas (asíncrono)
 
@@ -331,7 +344,9 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 
 | Riesgo                                | Mitigación                                              |
 |---------------------------------------|----------------------------------------------------------|
-| Doble click en pagar genera 2 órdenes | `idempotency_key` único antes de llamar Shopify         |
+| Doble click en pagar genera 2 órdenes | La landing envía `idempotency_key` (UUID oculto, partial `landings/partials/order-form-protection`) + botón bloqueado al enviar; `OrderService` devuelve la orden existente si la clave se repite |
+| Bots envían pedidos basura por el formulario | Validación estricta en `StorePublicOrderRequest` (departamento de lista, celular y cédula con formato) + honeypot + `throttle:5,1` |
+| Tienda Shopify congelada por plan vencido (pasó may–nov 2026: API devuelve `402 Unavailable Shop`) | Alertas de fallos (Sentry, pendiente) + revisar `queue:failed` |
 | Shopify caído → orden perdida         | Job con reintentos + tabla `failed_jobs` + alerta       |
 | Webhook de Shopify se pierde          | Comando `orders:reconcile` nocturno                      |
 | Pico de tráfico tumba PHP workers     | Cloudflare + caché de landings públicas                  |
@@ -367,18 +382,20 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 
 ## 13. Checklist de inicio del proyecto
 
+> Estados contrastados contra el código y contra producción el **12 nov 2026**. Varios ítems que figuraban como hechos no existían en el repositorio y pasaron a `[PENDING]`.
+
 - [X] Crear repo Git, estructura modular base
 - [PENDING] Configurar Cloudflare frente al dominio
 - [X] Crear app en Shopify Partners y obtener credenciales
 - [PENDING] Crear cuenta Sentry y configurar `sentry/sentry-laravel`
 - [X] Implementar tabla `orders` con `idempotency_key`
 - [X] Implementar `SendOrderToShopifyJob` con reintentos
-- [X] Configurar crontab con `schedule:run` + `queue:work --stop-when-empty`
+- [X] Configurar crontab con `schedule:run` + `queue:work --stop-when-empty` — ambos activos en hPanel cada minuto (confirmado 12 nov 2026, comandos en §7)
 - [X] Implementar verificación HMAC de webhooks Shopify (`VerifyShopifyWebhook` middleware — HMAC-SHA256 con `SHOPIFY_WEBHOOK_SECRET`)
 - [PENDING] Implementar comando `orders:reconcile`
-- [PENDING] SEO base: sitemap, meta tags dinámicos, JSON-LD
-- [PENDING] Definir estructura de URLs (subdominio vs subcarpeta) — **antes de publicar**
-- [X] Tablas `reviews` y `review_invitations` con FK a `order_items` y `products`
+- [PENDING] SEO base: las landings ya tienen meta tags, Open Graph y canonical; faltan `sitemap.xml` (hoy 404), JSON-LD `Product`/`Offer` y meta completos en el home
+- [X] Definir estructura de URLs — decidido: subcarpeta plana `glowya.com.co/{slug}` (§17)
+- [PENDING] Tablas `reviews` y `review_invitations` con FK a `order_items` y `products` — no existe la migración ni el módulo `Client`
 - [PENDING] `SendReviewRequestEmailJob` con magic link (`URL::temporarySignedRoute`, 30 días)
 - [PENDING] Vista pública de formulario de reseña (sin auth, validada por firma)
 - [PENDING] Cola de moderación de reseñas en panel admin (aprobar / rechazar / spam)
@@ -389,15 +406,29 @@ En producción siempre `config:cache`, `route:cache`, `view:cache`. Limpiar (`op
 - [PENDING] Endpoint `POST /api/orders` autenticado por API key (placeholder para bot WhatsApp post-MVP)
 - [PENDING] Configurar mapping Dropi↔Shopify según §8.1 (5 estados canónicos)
 - [X] **Desmarcar** "Sincronizar órdenes pagadas automáticamente" en panel Dropi (todo es COD)
-- [X] Logger temporal de payloads completos de webhooks Shopify (`ShopifyWebhookController::handle()` logea topic + shopify_order_id en cada request)
+- [PENDING] Logger temporal de payloads **completos** de webhooks Shopify — `ShopifyWebhookController::handle()` hoy solo logea topic + `shopify_order_id`; §8.1 pide el payload entero durante los primeros 5-10 pedidos
 - [PENDING] Política de envío gratis embebido (§16) reflejada en la tabla `products` o configuración de catálogo
 - [x] Módulo `Landing` con tabla `landings` (slug, blade_view, product_id, is_active) — §17
 - [x] Convención `resources/views/landings/{slug}.blade.php` ↔ `landings.blade_view`
 - [x] Catch-all dinámico `/{slug}` al final de `web.php` con regex `[a-z0-9-]+`
 - [x] Admin UI Inertia (`/admin/landings`) para toggle activo/inactivo
-- [X] `view()->exists()` defensivo en `PublicLandingController` antes de renderizar
-- [X] Reserved-slugs list validada en `LandingService::create/update` (login, register, admin, dashboard, api, profile, webhooks, storage, up)
-- [X] Comando `php artisan landing:make {slug} --product={id}` cuando se cree la landing #3
+- [PENDING] `view()->exists()` defensivo en `PublicLandingController` antes de renderizar — no está implementado; una blade borrada daría 500 al público
+- [PENDING] Reserved-slugs list validada en `LandingService::create/update` — no existe la lista ni los métodos `create`/`update` (las landings se insertan por migración)
+- [PENDING] Comando `php artisan landing:make {slug} --product={id}` — no existe; crearlo cuando llegue la landing #3
+**Agregado en la revisión del 12 nov 2026** (no estaba en el checklist original):
+
+- [X] Validación estricta del formulario público en `StorePublicOrderRequest` (departamento de lista cerrada, celular colombiano, cédula numérica) + honeypot + `throttle:5,1` — tras el spam de bots de jul–oct 2026
+- [X] Protección de doble envío: la landing manda `idempotency_key` y bloquea el botón (partial `landings/partials/order-form-protection`, incluirlo en toda landing nueva)
+- [X] `SendOrderToShopifyJob` no envía órdenes con `status_local = 'cancelled'` (permite cancelar spam antes de que salga a Shopify/Dropi)
+- [X] Tests del flujo de pedido público (`tests/Feature/Orders/PublicOrderTest.php`)
+- [PENDING] Alerta cuando un envío a Shopify agota reintentos (hoy solo queda en el log; la tienda estuvo congelada may–nov 2026 sin que nadie se enterara)
+- [PENDING] Sincronización automática de stock: programar `shopify:import-products` en `routes/console.php` (hoy solo se actualiza con "Sincronizar todo")
+- [PENDING] Píxel de medición en las landings (Meta / TikTok / Google Analytics) — sin esto no se puede medir qué anuncio vende
+- [PENDING] Política de privacidad / aviso de tratamiento de datos (se pide cédula, celular y correo) y enlace real de WhatsApp (los mensajes de error lo mencionan pero no existe)
+- [PENDING] Quitar el fallback `Product::first()` en `PublicLandingController` y `PublicOrderController`: una landing sin `product_id` vende el primer producto de la tabla sin avisar
+- [PENDING] Acciones en el panel de órdenes (cancelar, reenviar a Shopify); hoy es solo lectura
+- [PENDING] Pedido real de prueba en producción seguido hasta "entregado" para validar el mapping de §8.1
+- [PENDING] Arreglar o eliminar los 3 tests heredados que fallan (`RegistrationTest` ×2 — el registro está desactivado — y `ExampleTest`)
 
 ---
 
@@ -728,5 +759,5 @@ Endpoints adicionales en `Modules/Landing/Http/Controllers/Admin/LandingControll
 
 ---
 
-**Última revisión:** 11 mayo 2026 — §15 completado (webhooks + OAuth + dual-env documentados)  
+**Última revisión:** 12 noviembre 2026 — checklist §13 contrastado con el código, §7 documenta los crons reales de hPanel, §11 suma riesgos de bots, doble envío y tienda congelada  
 **Stack confirmado:** Laravel 12 + Inertia.js + React + TypeScript + Tailwind + MySQL + Hostinger Premium

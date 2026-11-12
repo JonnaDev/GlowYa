@@ -535,12 +535,7 @@
                     <form action="{{ route('landing.order', ['slug' => $landing->slug ?? 'noil']) }}" method="POST" class="mt-8 space-y-4">
                         @csrf
 
-                        {{-- Honeypot anti-bots: invisible para personas. Si se renombra, actualizar PublicOrderController. --}}
-                        <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
-                            <label>No llenar este campo
-                                <input type="text" name="extra_reference" value="" tabindex="-1" autocomplete="off">
-                            </label>
-                        </div>
+                        @include('landings.partials.order-form-protection')
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>

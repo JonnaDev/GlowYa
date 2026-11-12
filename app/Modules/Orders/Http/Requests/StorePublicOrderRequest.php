@@ -65,7 +65,10 @@ class StorePublicOrderRequest extends FormRequest
             'neighborhood' => ['nullable', 'string', 'max:80'],
             'address' => ['required', 'string', 'min:5', 'max:200'],
             'quantity' => ['required', 'integer', 'min:1', 'max:5'],
-            'notes' => ['nullable', 'string', 'max:500']
+            'notes' => ['nullable', 'string', 'max:500'],
+            // La genera la landing (partial order-form-protection). Si falta,
+            // OrderService crea una, pero entonces no hay protección de doble envío.
+            'idempotency_key' => ['nullable', 'uuid'],
         ];
     }
 

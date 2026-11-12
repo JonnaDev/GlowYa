@@ -56,6 +56,7 @@ class PublicOrderController extends Controller
 
         try {
             $order = $orders->createFromPayload([
+                'idempotency_key' => $validated['idempotency_key'] ?? null,
                 'recipient_full_name' => $validated['full_name'],
                 'recipient_id_number' => $validated['id_number'],
                 'recipient_phone' => $validated['phone'],
