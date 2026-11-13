@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Orders\Support;
 
-/**
- * Fuente única de departamentos: la usan los <select> de las landings y la
- * validación del pedido público, para que el servidor rechace cualquier valor
- * que no sea una opción real del formulario.
+/*
+Fuente única de departamentos: la usan los <select> de las landings y la
+validación del pedido público, para que el servidor rechace cualquier valor
+que no sea una opción real del formulario.
  */
 final class ColombiaDepartments
 {
