@@ -6,6 +6,7 @@ namespace App\Modules\Shopify\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Orders\Models\Order;
+use App\Modules\Orders\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -17,12 +18,17 @@ use Illuminate\Support\Facades\Log;
  *        Shopify dispara webhook → Laravel actualiza status_local + status_shopify.
  *
  * Topics manejados:
- *  - orders/fulfilled   → status_local = fulfilled
+ *  - orders/create      → registra pedidos creados fuera de este backend
+ *  - orders/fulfilled  → status_local = fulfilled
  *  - orders/cancelled   → status_local = cancelled
  *  - orders/updated     → sincroniza status_shopify (campo genérico)
  */
 class ShopifyWebhookController extends Controller
 {
+    public function __construct(
+        private readonly OrderService $orders,
+    ) {}
+
     /**
      * POST /webhooks/shopify
      *
@@ -39,6 +45,7 @@ class ShopifyWebhookController extends Controller
         ]);
 
         return match ($topic) {
+            'orders/create' => $this->handleOrderCreated($payload),
             'orders/fulfilled' => $this->handleFulfilled($payload),
             'fulfillments/create' => $this->handleFulfillmentCreated($payload),
             'fulfillments/update' => $this->handleFulfillmentUpdated($payload),
@@ -46,6 +53,38 @@ class ShopifyWebhookController extends Controller
             'orders/updated' => $this->handleUpdated($payload),
             default => response()->json(['ignored' => true], 200),
         };
+    }
+
+    /**
+     * orders/create — Pedido nuevo en Shopify. Los que creó este backend ya
+     * están en la DB y se ignoran; los externos (p. ej. el bot de WhatsApp)
+     * se registran localmente para que aparezcan en el panel y reciban los
+     * siguientes webhooks (guía, cancelación).
+     */
+    private function handleOrderCreated(array $payload): JsonResponse
+    {
+        $order = $this->orders->importFromShopify($payload);
+
+        if ($order === null) {
+            return response()->json(['status' => 'ignored'], 200);
+        }
+
+        if (! $order->wasRecentlyCreated) {
+            return response()->json(['status' => 'already_exists', 'order_id' => $order->id]);
+        }
+
+        // source_name y app_id quedan en el log para poder afinar cómo se
+        // identifica el origen (ver services.shopify.bot_app_id / bot_tag).
+        Log::channel('single')->info('[Webhook] External order imported', [
+            'order_id' => $order->id,
+            'shopify_order_id' => $order->shopify_order_id,
+            'source' => $order->source,
+            'shopify_source_name' => $payload['source_name'] ?? null,
+            'shopify_app_id' => $payload['app_id'] ?? null,
+            'shopify_tags' => $payload['tags'] ?? null,
+        ]);
+
+        return response()->json(['status' => 'imported', 'order_id' => $order->id]);
     }
 
     /**

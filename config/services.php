@@ -42,6 +42,12 @@ return [
         'api_key' => env('SHOPIFY_API_KEY'),
         'api_secret' => env('SHOPIFY_API_SECRET'),
         'webhook_secret' => env('SHOPIFY_WEBHOOK_SECRET'),
+
+        // Cómo reconocer, en el webhook orders/create, los pedidos que creó
+        // el bot de WhatsApp: por el app_id de su app de Shopify o por una
+        // etiqueta del pedido. El resto de pedidos externos queda como `shopify`.
+        'bot_app_id' => env('SHOPIFY_BOT_APP_ID'),
+        'bot_tag' => env('SHOPIFY_BOT_TAG', 'whatsapp'),
     ],
 
 ];

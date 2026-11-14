@@ -59,6 +59,152 @@ class OrderService
     }
 
     /**
+     * Registra en la DB local un pedido que nació en Shopify fuera de este
+     * backend (p. ej. creado por el bot de WhatsApp) y llegó por el webhook
+     * orders/create.
+     *
+     * No encola `SendOrderToShopifyJob`: el pedido ya existe en Shopify y
+     * reenviarlo lo duplicaría allí y en Dropi.
+     *
+     * Devuelve null cuando no hay nada que importar: el payload no trae id, o
+     * el pedido lo creó este mismo backend (etiqueta `glowya`) y ya está en la DB.
+     *
+     * @param  array<string,mixed>  $shopifyOrder  Objeto order tal como lo envía Shopify.
+     */
+    public function importFromShopify(array $shopifyOrder): ?Order
+    {
+        $shopifyOrderId = (string) ($shopifyOrder['id'] ?? '');
+        $tags = $this->parseTags($shopifyOrder['tags'] ?? '');
+
+        if ($shopifyOrderId === '' || in_array('glowya', $tags, true)) {
+            return null;
+        }
+
+        $existing = Order::where('shopify_order_id', $shopifyOrderId)->first();
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $address = $shopifyOrder['shipping_address']
+            ?? $shopifyOrder['billing_address']
+            ?? $shopifyOrder['customer']['default_address']
+            ?? [];
+        $customer = $shopifyOrder['customer'] ?? [];
+
+        $fullName = trim((string) ($address['name']
+            ?? trim(($address['first_name'] ?? $customer['first_name'] ?? '').' '.($address['last_name'] ?? $customer['last_name'] ?? ''))));
+
+        $lineItems = $shopifyOrder['line_items'] ?? [];
+        $itemsTotal = collect($lineItems)->sum(
+            fn (array $li): float => (float) ($li['price'] ?? 0) * (int) ($li['quantity'] ?? 1)
+        );
+
+        // Shopify reintenta los webhooks: la clave derivada de su id hace que
+        // una segunda entrega no cree un segundo registro.
+        $idempotencyKey = "shopify:{$shopifyOrderId}";
+
+        try {
+            return DB::transaction(function () use ($shopifyOrder, $shopifyOrderId, $tags, $address, $customer, $fullName, $lineItems, $itemsTotal, $idempotencyKey): Order {
+                $order = Order::create([
+                    'idempotency_key' => $idempotencyKey,
+                    'shopify_order_id' => $shopifyOrderId,
+                    'source' => $this->resolveShopifySource($shopifyOrder, $tags),
+                    'status_local' => 'sent_to_shopify',
+                    'status_shopify' => $shopifyOrder['fulfillment_status'] ?? $shopifyOrder['financial_status'] ?? null,
+                    'last_synced_at' => now(),
+                    'recipient_full_name' => $fullName,
+                    'recipient_id_number' => null,
+                    'recipient_phone' => $this->normalizeColombianPhone(
+                        $address['phone'] ?? $shopifyOrder['phone'] ?? $customer['phone'] ?? ''
+                    ),
+                    'recipient_email' => $shopifyOrder['email'] ?? $customer['email'] ?? null,
+                    'recipient_department' => (string) ($address['province'] ?? ''),
+                    'recipient_city' => (string) ($address['city'] ?? ''),
+                    'recipient_neighborhood' => $address['address2'] ?? null,
+                    'recipient_address_line' => (string) ($address['address1'] ?? ''),
+                    'recipient_notes' => $shopifyOrder['note'] ?? null,
+                    'total_amount' => (float) ($shopifyOrder['total_price'] ?? $itemsTotal),
+                ]);
+
+                foreach ($lineItems as $li) {
+                    $variantId = (string) ($li['variant_id'] ?? '');
+                    $product = $variantId !== ''
+                        ? Product::where('shopify_variant_id', $variantId)->first()
+                        : null;
+
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $product?->id,
+                        'shopify_variant_id' => $variantId,
+                        'title_snapshot' => (string) ($li['title'] ?? $li['name'] ?? $product?->title ?? 'Producto'),
+                        'sku_snapshot' => ($li['sku'] ?? '') !== '' ? $li['sku'] : $product?->sku,
+                        'quantity' => max(1, (int) ($li['quantity'] ?? 1)),
+                        'unit_price' => (float) ($li['price'] ?? 0),
+                    ]);
+                }
+
+                return $order->load('items');
+            });
+        } catch (UniqueConstraintViolationException) {
+            // Dos entregas del mismo webhook llegaron a la vez.
+            return Order::where('idempotency_key', $idempotencyKey)->firstOrFail();
+        }
+    }
+
+    /**
+     * `whatsapp_bot` si el pedido trae la marca configurada del bot (app_id de
+     * su app de Shopify o etiqueta); `shopify` para cualquier otro pedido externo.
+     *
+     * @param  array<string,mixed>  $shopifyOrder
+     * @param  array<int,string>  $tags
+     */
+    private function resolveShopifySource(array $shopifyOrder, array $tags): string
+    {
+        $botAppId = (string) config('services.shopify.bot_app_id', '');
+        $botTag = strtolower(trim((string) config('services.shopify.bot_tag', '')));
+
+        if ($botAppId !== '' && (string) ($shopifyOrder['app_id'] ?? '') === $botAppId) {
+            return 'whatsapp_bot';
+        }
+
+        if ($botTag !== '' && in_array($botTag, $tags, true)) {
+            return 'whatsapp_bot';
+        }
+
+        return 'shopify';
+    }
+
+    /**
+     * @return array<int,string> etiquetas en minúsculas, sin espacios alrededor
+     */
+    private function parseTags(mixed $tags): array
+    {
+        if (! is_string($tags) || trim($tags) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(fn (string $t): string => strtolower(trim($t)), explode(',', $tags)),
+            fn (string $t): bool => $t !== '',
+        ));
+    }
+
+    /**
+     * Deja el celular en 10 dígitos quitando separadores y el indicativo 57.
+     * Si no encaja en ese formato se guarda tal cual llegó, sin separadores.
+     */
+    private function normalizeColombianPhone(mixed $value): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $value) ?? '';
+
+        if (strlen($digits) === 12 && str_starts_with($digits, '57')) {
+            return substr($digits, 2);
+        }
+
+        return $digits;
+    }
+
+    /**
      * @param  array<int,array{product_id:int,shopify_variant_id:string,title:string,sku:?string,quantity:int,unit_price:float}>  $items
      */
     private function persist(array $payload, string $source, string $idempotencyKey, array $items, float $totalAmount): Order
